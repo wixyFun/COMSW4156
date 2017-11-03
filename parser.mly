@@ -1,4 +1,5 @@
 /* Ocamlyacc parser for MicroC */
+(*might be good to read this before: http://caml.inria.fr/pub/docs/manual-ocaml/lexyacc.html*)
 
 %{
 open Ast
@@ -16,6 +17,7 @@ open Ast
 
 
 (*Olesya: the presedence of the tokens, bottom is the highest *)
+(*associativity of the token, left, right or no assoc*)
 %nonassoc NOELSE
 %nonassoc ELSE
 %right ASSIGN
@@ -35,6 +37,14 @@ open Ast
 
 %%
 
+
+(*rules that mirow the ast*)
+(*the syntax : symbol … symbol { semantic-action }*)
+(*Semantic actions are arbitrary OCaml expressions, 
+that are evaluated to produce the semantic attribute attached 
+to the defined nonterminal. The semantic actions can access the semantic attributes of the symbols in
+ the right-hand side of the rule with the $ notation: $1 is the attribute for the first (leftmost) symbol, 
+ $2 is the attribute for the second symbol, etc.*)
 program:
   decls EOF { $1 }
 
