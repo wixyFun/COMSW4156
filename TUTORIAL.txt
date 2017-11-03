@@ -15,7 +15,8 @@ http://www.cs.cmu.edu/~janh/courses/411/16/lec/26-llvm-slides.pdf
 *************************************8
 MAYBE START HERE:
 **********************************
-the ocaml llvm tutorial very detailed : 
+the ocaml llvm tutorial very detailed : note in chapter 1,2 they do not use the lexer parser tool(yak),
+so syntax is not what we need, so skim for ideas and general understanding maybe 
 https://llvm.org/docs/tutorial/
 
 this one is looks like one step by step similar to what we should do in code gen:
