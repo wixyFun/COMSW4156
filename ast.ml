@@ -38,6 +38,7 @@ type func_decl = {
 type program = bind list * func_decl list
 
 (* Pretty-printing functions *)
+(*Olessya: this is not the part of the AST itself, but the function to print it out!!!!!!*)
 
 let string_of_op = function
     Add -> "+"

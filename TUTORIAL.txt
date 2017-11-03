@@ -1,0 +1,22 @@
+Lets use this file for tutorial:
+
+USEFUL LINKS TO LOOK THROUGH:
+
+Lexer and Parser aka scanner and parser
+http://caml.inria.fr/pub/docs/manual-ocaml/lexyacc.html
+
+
+ocaml modul LLVM:
+https://llvm.moe/ocaml-3.7/Llvm.html
+
+about llvm :
+http://www.cs.cmu.edu/~janh/courses/411/16/lec/26-llvm-slides.pdf
+
+*************************************8
+MAYBE START HERE:
+**********************************
+the ocaml llvm tutorial very detailed : look/scroll down  for ocaml one 
+https://llvm.org/docs/tutorial/
+
+this one is looks like one step by step similar to what we should do in code gen:
+https://llvm.org/docs/tutorial/OCamlLangImpl3.html
