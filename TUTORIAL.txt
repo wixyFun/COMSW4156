@@ -15,7 +15,7 @@ http://www.cs.cmu.edu/~janh/courses/411/16/lec/26-llvm-slides.pdf
 *************************************8
 MAYBE START HERE:
 **********************************
-the ocaml llvm tutorial very detailed : look/scroll down  for ocaml one 
+the ocaml llvm tutorial very detailed : 
 https://llvm.org/docs/tutorial/
 
 this one is looks like one step by step similar to what we should do in code gen:
