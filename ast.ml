@@ -5,13 +5,15 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
 
 type uop = Neg | Not
 
-type typ = Int | Bool | Void
+(*We added a string here*)
+type typ = Int | Bool | Void | String
 
 type bind = typ * string
 
 type expr =
     Literal of int
   | BoolLit of bool
+  | StringSeq of string
   | Id of string
   | Binop of expr * op * expr
   | Unop of uop * expr
@@ -60,6 +62,7 @@ let string_of_uop = function
 let rec string_of_expr = function
     Literal(l) -> string_of_int l
   | BoolLit(true) -> "true"
+  | StringSeq(s) -> s
   | BoolLit(false) -> "false"
   | Id(s) -> s
   | Binop(e1, o, e2) ->
