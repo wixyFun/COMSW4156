@@ -8,10 +8,13 @@ open Ast
 %token SEMI LPAREN RPAREN LBRACE RBRACE COMMA
 %token PLUS MINUS TIMES DIVIDE ASSIGN NOT
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
+
 %token RETURN IF ELSE FOR WHILE INT BOOL VOID
 
 (*Olesya:this tokens must have value attached to them*)
+
 %token <int> LITERAL
+%token <string>STRING_SEQ
 %token <string> ID
 %token EOF
 
@@ -102,6 +105,7 @@ expr_opt:
 
 expr:
     LITERAL          { Literal($1) }
+  | STRING_SEQ       { StringSeq($1) }
   | TRUE             { BoolLit(true) }
   | FALSE            { BoolLit(false) }
   | ID               { Id($1) }
