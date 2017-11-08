@@ -32,11 +32,11 @@ rule token = parse
 | "return" { RETURN }
 | "int"    { INT }
 | "bool"   { BOOL }
+| "string" { STRING } (* -ryan*)
 | "void"   { VOID }
 | "true"   { TRUE }
 | "false"  { FALSE }
 | ['0'-'9']+ as lxm { LITERAL(int_of_string lxm) }
-| "string" { STRING } (* -ryan*)
 | "'" ((['a'-'z' 'A'-'Z']|['0'-'9']|'!'|',')* as lxm) "'" { STRING_SEQ(lxm) } (* We added this, a regex for char / num*... add special chars -ryan*)
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
 | eof { EOF }

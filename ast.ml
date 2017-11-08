@@ -13,7 +13,7 @@ type bind = typ * string
 type expr =
     Literal of int
   | BoolLit of bool
-  | StringSeg of string
+  | StringSeq of string
   | Id of string
   | Binop of expr * op * expr
   | Unop of uop * expr
@@ -91,7 +91,7 @@ let string_of_typ = function
     Int -> "int"
   | Bool -> "bool"
   | Void -> "void"
-
+  | String -> "string"
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
 
 let string_of_fdecl fdecl =

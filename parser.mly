@@ -1,26 +1,25 @@
 /* Ocamlyacc parser for MicroC */
-(*might be good to read this before: http://caml.inria.fr/pub/docs/manual-ocaml/lexyacc.html*)
 
 %{
 open Ast
 %}
-(*Olesya:just listing all the tokens without any value attached to them *)
+/*Olesya:just listing all the tokens without any value attached to them */
 %token SEMI LPAREN RPAREN LBRACE RBRACE COMMA
 %token PLUS MINUS TIMES DIVIDE ASSIGN NOT
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
 
-%token RETURN IF ELSE FOR WHILE INT BOOL VOID
+%token RETURN IF ELSE FOR WHILE INT BOOL STRING VOID
 
-(*Olesya:this tokens must have value attached to them*)
+/*Olesya:this tokens must have value attached to them*/
 
 %token <int> LITERAL
-%token <string>STRING_SEQ
+%token <string> STRING_SEQ
 %token <string> ID
 %token EOF
 
 
-(*Olesya: the presedence of the tokens, bottom is the highest *)
-(*associativity of the token, left, right or no assoc*)
+/*Olesya: the presedence of the tokens, bottom is the highest */
+/*associativity of the token, left, right or no assoc*/
 %nonassoc NOELSE
 %nonassoc ELSE
 %right ASSIGN
@@ -32,22 +31,18 @@ open Ast
 %left TIMES DIVIDE
 %right NOT NEG
 
-(*Olesya: specifies where your program starts *)
+/*Olesya: specifies where your program starts */
 %start program
 
-(*Olesya: defines what the program is, token program with the value of <Ast.program>*)
+/*Olesya: defines what the program is, token program with the value of <Ast.program>*/
 %type <Ast.program> program
 
 %%
 
 
-(*rules that mirow the ast*)
-(*the syntax : symbol … symbol { semantic-action }*)
-(*Semantic actions are arbitrary OCaml expressions,
-that are evaluated to produce the semantic attribute attached
-to the defined nonterminal. The semantic actions can access the semantic attributes of the symbols in
- the right-hand side of the rule with the $ notation: $1 is the attribute for the first (leftmost) symbol,
- $2 is the attribute for the second symbol, etc.*)
+/*rules that mirow the ast*/
+/*the syntax : symbol … symbol { semantic-action }*/
+
 program:
   decls EOF { $1 }
 
