@@ -43,10 +43,10 @@ open Ast
 
 (*rules that mirow the ast*)
 (*the syntax : symbol … symbol { semantic-action }*)
-(*Semantic actions are arbitrary OCaml expressions, 
-that are evaluated to produce the semantic attribute attached 
+(*Semantic actions are arbitrary OCaml expressions,
+that are evaluated to produce the semantic attribute attached
 to the defined nonterminal. The semantic actions can access the semantic attributes of the symbols in
- the right-hand side of the rule with the $ notation: $1 is the attribute for the first (leftmost) symbol, 
+ the right-hand side of the rule with the $ notation: $1 is the attribute for the first (leftmost) symbol,
  $2 is the attribute for the second symbol, etc.*)
 program:
   decls EOF { $1 }
@@ -76,6 +76,7 @@ typ:
     INT { Int }
   | BOOL { Bool }
   | VOID { Void }
+  | STRING { String }
 
 vdecl_list:
     /* nothing */    { [] }
