@@ -46,7 +46,7 @@ let check (globals, functions) =
   report_duplicate (fun n -> "duplicate function " ^ n)
     (List.map (fun fd -> fd.fname) functions);
 
-  (* Function declaration for a named function *)
+  (* Function declaration for a named function
   let built_in_decls =  StringMap.add "print"
      { typ = Void; fname = "print"; formals = [(Int, "x")];
        locals = []; body = [] } (StringMap.add "printb"
@@ -54,11 +54,27 @@ let check (globals, functions) =
        locals = []; body = [] } (StringMap.singleton "printbig"
      { typ = Void; fname = "printbig"; formals = [(Int, "x")];
        locals = []; body = []} ))
-   in
+     in *)
+     let built_in_decls = StringMap.empty in
+
+     let built_in_decls = StringMap.add "print"
+   	{ typ = Void; fname = "print"; formals = [(Int, "x")];
+   	locals = []; body = [] } built_in_decls in
+     let built_in_decls = StringMap.add "printb"
+   	{ typ = Void; fname = "printb"; formals = [(Bool, "x")];
+   	locals = []; body = [] } built_in_decls  in
+     let built_in_decls = StringMap.add "prints"
+   	{ typ = Void; fname = "printstring"; formals = [(String, "x")];
+   	locals = []; body = [] } built_in_decls in
    (* (StringMap.singleton "printstring"
       { typ = Void; fname = "printstring"; formals = [(String,"x")];
-      locals = []; body = []})*)
-   
+      locals = []; body = []})
+
+      let built_in_decls = StringMap.add "printf"
+      { typ = Void; fname = "printf"; formals = [(Float, "x")];
+      locals = []; body = [] } built_in_decls in
+   *)
+
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
                          built_in_decls functions
   in

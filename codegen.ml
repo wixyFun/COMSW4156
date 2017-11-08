@@ -62,7 +62,7 @@ let translate (globals, functions) =
     let (the_function, _) = StringMap.find fdecl.A.fname function_decls in
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
-    let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
+    let int_format_str   = L.build_global_stringptr "%d\n" "fmt" builder in
     let str_format_str   = L.build_global_stringptr "%s\n" "fmt" builder in
 
     (* Construct the function's "locals": formal arguments and locally
@@ -122,10 +122,10 @@ let translate (globals, functions) =
 	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
 	    "printf" builder
       | A.Call ("printbig", [e]) ->
-	  L.build_call printbig_func [| (expr builder e) |] "printbig" builder
+        L.build_call printbig_func [| (expr builder e) |] "printbig" builder
       |  A.Call ("printstring", [e]) ->
-         L.build_call printf_func [| str_format_str; (expr builder e) |]
-          "printf" builder
+             L.build_call printf_func [| str_format_str; (expr builder e) |]
+              "printf" builder
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
@@ -133,6 +133,8 @@ let translate (globals, functions) =
                                             | _ -> f ^ "_result") in
          L.build_call fdef (Array.of_list actuals) result builder
     in
+
+
 
     (* Invoke "f builder" if the current block doesn't already
        have a terminal (e.g., a branch). *)
