@@ -20,9 +20,9 @@ module StringMap = Map.Make(String)
 let translate (globals, functions) =
   let context = L.global_context () in
   let the_module = L.create_module context "MicroC"
+  and i8_t   = L.i8_type   context
   and i32_t  = L.i32_type  context
   and str_t  = L.pointer_type (L.i8_type context)
-  and i8_t   = L.i8_type   context
   and i1_t   = L.i1_type   context
   and void_t = L.void_type context in
 
@@ -47,8 +47,8 @@ let translate (globals, functions) =
   let printbig_t = L.function_type i32_t [| i32_t |] in
   let printbig_func = L.declare_function "printbig" printbig_t the_module in
 
-  let printstring_t = L.var_arg_function_type str_t [| L.pointer_type i8_t |] in
-  let printstring_func = L.declare_function "printstring" printstring_t the_module in
+  (* let printstring_t = L.var_arg_function_type str_t [| L.pointer_type i8_t |] in
+  let printstring_func = L.declare_function "printstring" printstring_t the_module in *)
 
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
@@ -92,9 +92,9 @@ let translate (globals, functions) =
 
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
-	      A.Literal i -> L.const_int i32_t i
-      | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
+        A.Literal i -> L.const_int i32_t i
       | A.StringSeq str -> L.build_global_stringptr str "tmp" builder
+      | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | A.Noexpr -> L.const_int i32_t 0
       | A.Id s -> L.build_load (lookup s) s builder
       | A.Binop (e1, op, e2) ->
@@ -127,8 +127,8 @@ let translate (globals, functions) =
       | A.Call ("printbig", [e]) ->
 	  L.build_call printbig_func [| (expr builder e) |] "printbig" builder
       |  A.Call ("printstring", [e]) ->
-         L.build_call printstring_func [| str_format_str; (expr builder e) |]
-          "printstring" builder
+      L.build_call printf_func [| str_format_str; (expr builder e) |]
+        "printf" builder
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
