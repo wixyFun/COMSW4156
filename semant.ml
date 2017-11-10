@@ -47,16 +47,32 @@ let check (globals, functions) =
     (List.map (fun fd -> fd.fname) functions);
 
   (* Function declaration for a named function *)
-  let built_in_decls =  StringMap.add "print"
+
+  let built_in_decls = StringMap.empty in
+
+  (* let built_in_decls =  StringMap.add "print"
      { typ = Void; fname = "print"; formals = [(Int, "x")];
        locals = []; body = [] } (StringMap.add "printb"
      { typ = Void; fname = "printb"; formals = [(Bool, "x")];
        locals = []; body = [] } (StringMap.add "printbig"
      { typ = Void; fname = "printbig"; formals = [(Int, "x")];
-       locals = []; body = []} (StringMap.singleton "printstring"
+       locals = []; body = []} (StringMap.add "printstring"
      { typ = Void; fname = "printstring"; formals = [(String,"x")];
        locals = []; body = []})))
-   in
+  in *)
+
+  let built_in_decls = StringMap.add "print"
+	{ typ = Void; fname = "print"; formals = [(Int, "x")];
+	locals = []; body = [] } built_in_decls in
+  let built_in_decls = StringMap.add "printb"
+	{ typ = Void; fname = "printb"; formals = [(Bool, "x")];
+	locals = []; body = [] } built_in_decls  in
+  let built_in_decls = StringMap.add "printbig"
+	{ typ = Void; fname = "printbig"; formals = [(Int, "x")];
+	locals = []; body = [] } built_in_decls in
+  let built_in_decls = StringMap.add "printstring"
+	{ typ = Void; fname = "printstring"; formals = [(String, "x")];
+	locals = []; body = [] } built_in_decls in
    (* (StringMap.singleton "printstring"
       { typ = Void; fname = "printstring"; formals = [(String,"x")];
       locals = []; body = []})*)
