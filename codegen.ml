@@ -47,6 +47,9 @@ let translate (globals, functions) =
   let printbig_t = L.function_type i32_t [| i32_t |] in
   let printbig_func = L.declare_function "printbig" printbig_t the_module in
 
+  let printstring_t = L.var_arg_function_type str_t [| L.pointer_type i8_t |] in
+  let printstring_func = L.declare_function "printstring" printstring_t the_module in
+
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
     let function_decl m fdecl =
@@ -63,7 +66,7 @@ let translate (globals, functions) =
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
-    let str_format_str   = L.build_global_stringptr "%s\n" "fmt" builder in
+    let str_format_str = L.build_global_stringptr "%s\n" "fmt" builder in
 
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
@@ -124,8 +127,8 @@ let translate (globals, functions) =
       | A.Call ("printbig", [e]) ->
 	  L.build_call printbig_func [| (expr builder e) |] "printbig" builder
       |  A.Call ("printstring", [e]) ->
-         L.build_call printf_func [| str_format_str; (expr builder e) |]
-          "printf" builder
+         L.build_call printstring_func [| str_format_str; (expr builder e) |]
+          "printstring" builder
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in

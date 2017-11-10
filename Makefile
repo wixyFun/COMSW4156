@@ -80,7 +80,7 @@ TESTFILES = $(TESTS:%=test-%.mc) $(TESTS:%=test-%.out) \
 
 TARFILES = ast.ml codegen.ml Makefile _tags microc.ml parser.mly README \
         scanner.mll semant.ml testall.sh printbig.c arcade-font.pbm font2c \
-	$(TESTFILES:%=tests/%) 
+	$(TESTFILES:%=tests/%)
 
 microc-llvm.tar.gz : $(TARFILES)
 	cd .. && tar czf microc-llvm/microc-llvm.tar.gz \
