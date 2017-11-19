@@ -73,9 +73,10 @@ let check (globals, functions) =
   let built_in_decls = StringMap.add "printstring"
 	{ typ = Void; fname = "printstring"; formals = [(String, "x")];
 	locals = []; body = [] } built_in_decls in
-   (* (StringMap.singleton "printstring"
-      { typ = Void; fname = "printstring"; formals = [(String,"x")];
-      locals = []; body = []})*)
+  let built_in_decls = StringMap.add "splitfile"
+  { typ = Void; fname = "splitfile"; formals = [(String, "x")];
+	locals = []; body = [] } built_in_decls in
+
 
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
                          built_in_decls functions

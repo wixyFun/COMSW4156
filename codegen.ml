@@ -47,8 +47,11 @@ let translate (globals, functions) =
   let printbig_t = L.function_type i32_t [| i32_t |] in
   let printbig_func = L.declare_function "printbig" printbig_t the_module in
 
-  (* let printstring_t = L.var_arg_function_type str_t [| L.pointer_type i8_t |] in
-  let printstring_func = L.declare_function "printstring" printstring_t the_module in *)
+
+  (* Declare the built-in splitfile() function *)
+  let splitfile_t = L.function_type i32_t [| str_t |] in
+  let splitfile_func = L.declare_function "splitfile" splitfile_t the_module in
+
 
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
@@ -104,7 +107,7 @@ let translate (globals, functions) =
 	    A.Add     -> L.build_add
 	  | A.Sub     -> L.build_sub
 	  | A.Mult    -> L.build_mul
-          | A.Div     -> L.build_sdiv
+    | A.Div     -> L.build_sdiv
 	  | A.And     -> L.build_and
 	  | A.Or      -> L.build_or
 	  | A.Equal   -> L.build_icmp L.Icmp.Eq
@@ -125,7 +128,9 @@ let translate (globals, functions) =
 	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
 	    "printf" builder
       | A.Call ("printbig", [e]) ->
-	  L.build_call printbig_func [| (expr builder e) |] "printbig" builder
+        L.build_call printbig_func [| (expr builder e) |] "printbig" builder
+      | A.Call ("splitfile", [e]) ->
+      L.build_call splitfile_func [| (expr builder e) |] "splitfile" builder
       |  A.Call ("printstring", [e]) ->
       L.build_call printf_func [| str_format_str; (expr builder e) |]
         "printf" builder
@@ -147,11 +152,11 @@ let translate (globals, functions) =
     (* Build the code for the given statement; return the builder for
        the statement's successor *)
     let rec stmt builder = function
-	A.Block sl -> List.fold_left stmt builder sl
+	      A.Block sl -> List.fold_left stmt builder sl
       | A.Expr e -> ignore (expr builder e); builder
       | A.Return e -> ignore (match fdecl.A.typ with
-	  A.Void -> L.build_ret_void builder
-	| _ -> L.build_ret (expr builder e) builder); builder
+	      A.Void -> L.build_ret_void builder
+	    | _ -> L.build_ret (expr builder e) builder); builder
       | A.If (predicate, then_stmt, else_stmt) ->
          let bool_val = expr builder predicate in
 	 let merge_bb = L.append_block context "merge" the_function in
