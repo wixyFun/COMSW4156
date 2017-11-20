@@ -2,7 +2,7 @@
 
 int main()
 {
-  splitfile("jamiesong.txt");
+  splitfile("bigbang.txt");
   return 0;
 }
 
