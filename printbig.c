@@ -1,5 +1,5 @@
 /*
- *  A function illustrating how to link C code to code generated from LLVM 
+ *  A function illustrating how to link C code to code generated from LLVM
  */
 
 #include <stdio.h>
@@ -61,9 +61,8 @@ void printbig(int c)
       putchar(d); putchar(d);
     }
     putchar('\n');
-  } while (index & 0x7); 
+  } while (index & 0x7);
 }
-
 
 #ifdef BUILD_TEST
 int main()
@@ -71,5 +70,6 @@ int main()
   char s[] = "HELLO WORLD09AZ";
   char *c;
   for ( c = s ; *c ; c++) printbig(*c);
+
 }
 #endif
