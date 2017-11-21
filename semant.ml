@@ -25,17 +25,17 @@ let check (globals, functions) =
       (Void, n) -> raise (Failure (exceptf n))
     | _ -> ()
   in
-  
+
   (* Raise an exception of the given rvalue type cannot be assigned to
      the given lvalue type *)
   let check_assign lvaluet rvaluet err =
      if lvaluet == rvaluet then lvaluet else raise err
   in
-   
+
   (**** Checking Global Variables ****)
 
   List.iter (check_not_void (fun n -> "illegal void global " ^ n)) globals;
-   
+
   report_duplicate (fun n -> "duplicate global " ^ n) (List.map snd globals);
 
   (**** Checking Functions ****)
@@ -47,15 +47,39 @@ let check (globals, functions) =
     (List.map (fun fd -> fd.fname) functions);
 
   (* Function declaration for a named function *)
-  let built_in_decls =  StringMap.add "print"
+
+  let built_in_decls = StringMap.empty in
+
+  (* let built_in_decls =  StringMap.add "print"
      { typ = Void; fname = "print"; formals = [(Int, "x")];
        locals = []; body = [] } (StringMap.add "printb"
      { typ = Void; fname = "printb"; formals = [(Bool, "x")];
-       locals = []; body = [] } (StringMap.singleton "printbig"
+       locals = []; body = [] } (StringMap.add "printbig"
      { typ = Void; fname = "printbig"; formals = [(Int, "x")];
-       locals = []; body = [] }))
-   in
-     
+       locals = []; body = []} (StringMap.add "printstring"
+     { typ = Void; fname = "printstring"; formals = [(String,"x")];
+       locals = []; body = []})))
+  in *)
+
+  let built_in_decls = StringMap.add "print"
+	{ typ = Void; fname = "print"; formals = [(Int, "x")];
+	locals = []; body = [] } built_in_decls in
+  let built_in_decls = StringMap.add "printb"
+	{ typ = Void; fname = "printb"; formals = [(Bool, "x")];
+	locals = []; body = [] } built_in_decls  in
+  let built_in_decls = StringMap.add "printbig"
+	{ typ = Void; fname = "printbig"; formals = [(Int, "x")];
+	locals = []; body = [] } built_in_decls in
+  let built_in_decls = StringMap.add "printstring"
+	{ typ = Void; fname = "printstring"; formals = [(String, "x")];
+	locals = []; body = [] } built_in_decls in
+  let built_in_decls = StringMap.add "open"
+	{ typ =  File; fname = "open"; formals = [(String, "x")];
+	locals = []; body = [] } built_in_decls in
+   (* (StringMap.singleton "printstring"
+      { typ = Void; fname = "printstring"; formals = [(String,"x")];
+      locals = []; body = []})*)
+
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
                          built_in_decls functions
   in
@@ -95,6 +119,7 @@ let check (globals, functions) =
 	Literal _ -> Int
       | BoolLit _ -> Bool
       | Id s -> type_of_identifier s
+      | StringSeq _ -> String
       | Binop(e1, op, e2) as e -> let t1 = expr e1 and t2 = expr e2 in
 	(match op with
           Add | Sub | Mult | Div when t1 = Int && t2 = Int -> Int
@@ -115,7 +140,7 @@ let check (globals, functions) =
       | Assign(var, e) as ex -> let lt = type_of_identifier var
                                 and rt = expr e in
         check_assign lt rt (Failure ("illegal assignment " ^ string_of_typ lt ^
-				     " = " ^ string_of_typ rt ^ " in " ^ 
+				     " = " ^ string_of_typ rt ^ " in " ^
 				     string_of_expr ex))
       | Call(fname, actuals) as call -> let fd = function_decl fname in
          if List.length actuals != List.length fd.formals then
@@ -147,7 +172,7 @@ let check (globals, functions) =
       | Return e -> let t = expr e in if t = func.typ then () else
          raise (Failure ("return gives " ^ string_of_typ t ^ " expected " ^
                          string_of_typ func.typ ^ " in " ^ string_of_expr e))
-           
+
       | If(p, b1, b2) -> check_bool_expr p; stmt b1; stmt b2
       | For(e1, e2, e3, st) -> ignore (expr e1); check_bool_expr e2;
                                ignore (expr e3); stmt st
@@ -155,6 +180,6 @@ let check (globals, functions) =
     in
 
     stmt (Block func.body)
-   
+
   in
   List.iter check_function functions
