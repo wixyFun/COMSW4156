@@ -20,15 +20,19 @@ module StringMap = Map.Make(String)
 let translate (globals, functions) =
   let context = L.global_context () in
   let the_module = L.create_module context "MicroC"
-  and i32_t  = L.i32_type  context
   and i8_t   = L.i8_type   context
+  and i32_t  = L.i32_type  context
+  and str_t  = L.pointer_type (L.i8_type context)
   and i1_t   = L.i1_type   context
   and void_t = L.void_type context in
+  let void_ptr =  L.pointer_type (L.i8_type context)   in
 
   let ltype_of_typ = function
       A.Int -> i32_t
     | A.Bool -> i1_t
-    | A.Void -> void_t in
+    | A.String -> str_t
+    | A.Void -> void_t
+    | A.File -> void_ptr in
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
@@ -45,6 +49,14 @@ let translate (globals, functions) =
   let printbig_t = L.function_type i32_t [| i32_t |] in
   let printbig_func = L.declare_function "printbig" printbig_t the_module in
 
+  let open_t = L.function_type void_ptr [| str_t |] in
+  let open_func = L.declare_function "open" open_t the_module in
+
+
+
+  (* let printstring_t = L.var_arg_function_type str_t [| L.pointer_type i8_t |] in
+  let printstring_func = L.declare_function "printstring" printstring_t the_module in *)
+
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
     let function_decl m fdecl =
@@ -54,14 +66,15 @@ let translate (globals, functions) =
       in let ftype = L.function_type (ltype_of_typ fdecl.A.typ) formal_types in
       StringMap.add name (L.define_function name ftype the_module, fdecl) m in
     List.fold_left function_decl StringMap.empty functions in
-  
+
   (* Fill in the body of the given function *)
   let build_function_body fdecl =
     let (the_function, _) = StringMap.find fdecl.A.fname function_decls in
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
-    
+    let str_format_str = L.build_global_stringptr "%s\n" "fmt" builder in
+
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
        value, if appropriate, and remember their values in the "locals" map *)
@@ -86,7 +99,8 @@ let translate (globals, functions) =
 
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
-	A.Literal i -> L.const_int i32_t i
+        A.Literal i -> L.const_int i32_t i
+      | A.StringSeq str -> L.build_global_stringptr str "tmp" builder
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | A.Noexpr -> L.const_int i32_t 0
       | A.Id s -> L.build_load (lookup s) s builder
@@ -119,6 +133,11 @@ let translate (globals, functions) =
 	    "printf" builder
       | A.Call ("printbig", [e]) ->
 	  L.build_call printbig_func [| (expr builder e) |] "printbig" builder
+      |  A.Call ("printstring", [e]) ->
+      L.build_call printf_func [| str_format_str; (expr builder e) |]
+        "printf" builder
+    | A.Call ("open", [e]) ->
+    L.build_call open_func [| (expr builder e) |] "open" builder
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
@@ -133,7 +152,7 @@ let translate (globals, functions) =
       match L.block_terminator (L.insertion_block builder) with
 	Some _ -> ()
       | None -> ignore (f builder) in
-	
+
     (* Build the code for the given statement; return the builder for
        the statement's successor *)
     let rec stmt builder = function
