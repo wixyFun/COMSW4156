@@ -21,6 +21,7 @@ clean :
 	rm -rf printbig
 	rm -rf splitfile
 	rm -rf *.cmx *.cmi *.cmo *.cmx *.o *.s *.ll *.out *.exe
+	find . -name "smallFileName_*" -print0 | xargs -0 rm
 
 # More detailed: build using ocamlc/ocamlopt + ocamlfind to locate LLVM
 
