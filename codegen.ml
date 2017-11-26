@@ -31,6 +31,7 @@ let translate (globals, functions) =
     | A.Bool -> i1_t
     | A.String -> str_t
     | A.Void -> void_t in
+    (* | A.File -> void_ptr in *)
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
@@ -49,8 +50,8 @@ let translate (globals, functions) =
 
 
   (* Declare the built-in splitfile() function *)
-  let splitfile_t = L.function_type i32_t [| str_t |] in
-  let splitfile_func = L.declare_function "splitfile" splitfile_t the_module in
+  let split_by_size_t = L.function_type i32_t [| str_t ; i32_t |] in
+  let split_by_size_func = L.declare_function "split_by_size" split_by_size_t the_module in
 
 
   (* Define each function (arguments and return type) so we can call it *)
@@ -129,8 +130,8 @@ let translate (globals, functions) =
 	    "printf" builder
       | A.Call ("printbig", [e]) ->
         L.build_call printbig_func [| (expr builder e) |] "printbig" builder
-      | A.Call ("splitfile", [e]) ->
-      L.build_call splitfile_func [| (expr builder e) |] "splitfile" builder
+      | A.Call ("split_by_size", [e;f]) ->
+        L.build_call split_by_size_func [| (expr builder e); (expr builder f)|] "split_by_size" builder
       |  A.Call ("printstring", [e]) ->
       L.build_call printf_func [| str_format_str; (expr builder e) |]
         "printf" builder

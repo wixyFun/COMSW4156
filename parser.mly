@@ -72,6 +72,7 @@ typ:
   | BOOL { Bool }
   | VOID { Void }
   | STRING { String }
+  /*| FILE { File }*/
 
 vdecl_list:
     /* nothing */    { [] }

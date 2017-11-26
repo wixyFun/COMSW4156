@@ -94,7 +94,7 @@ Check() {
     generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
     Run "$MICROC" "$1" ">" "${basename}.ll" &&
     Run "$LLC" "${basename}.ll" ">" "${basename}.s" &&
-    Run "$CC" "-o" "${basename}.exe" "${basename}.s" "splitfile.o" &&
+    Run "$CC" "-o" "${basename}.exe" "${basename}.s" "split_by_size.o printbig.o" &&
     # Run "$CC" "-o" "${basename}.exe" "${basename}.s" "printbig.o" &&
     Run "./${basename}.exe" > "${basename}.out" &&
     Compare ${basename}.out ${reffile}.out ${basename}.diff
@@ -173,10 +173,10 @@ then
     exit 1
 fi
 
-if [ ! -f splitfile.o ]
+if [ ! -f split_by_size.o ]
 then
-    echo "Could not find splitfile.o"
-    echo "Try \"make splitfile.o\""
+    echo "Could not find split_by_size.o"
+    echo "Try \"make split_by_size.o\""
     exit 1
 fi
 

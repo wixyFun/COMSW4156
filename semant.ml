@@ -63,19 +63,23 @@ let check (globals, functions) =
 
   let built_in_decls = StringMap.add "print"
 	{ typ = Void; fname = "print"; formals = [(Int, "x")];
-	locals = []; body = [] } built_in_decls in
+   locals = []; body = [] } built_in_decls in
+
   let built_in_decls = StringMap.add "printb"
 	{ typ = Void; fname = "printb"; formals = [(Bool, "x")];
-	locals = []; body = [] } built_in_decls  in
+   locals = []; body = [] } built_in_decls  in
+
   let built_in_decls = StringMap.add "printbig"
 	{ typ = Void; fname = "printbig"; formals = [(Int, "x")];
-	locals = []; body = [] } built_in_decls in
+   locals = []; body = [] } built_in_decls in
+
   let built_in_decls = StringMap.add "printstring"
 	{ typ = Void; fname = "printstring"; formals = [(String, "x")];
-	locals = []; body = [] } built_in_decls in
-  let built_in_decls = StringMap.add "splitfile"
-  { typ = Void; fname = "splitfile"; formals = [(String, "x")];
-	locals = []; body = [] } built_in_decls in
+   locals = []; body = [] } built_in_decls in
+
+  let built_in_decls = StringMap.add "split_by_size"
+  { typ = Void; fname = "split_by_size"; formals = [(String, "x");(Int, "y")];
+  locals = []; body = [] } built_in_decls in
 
 
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
