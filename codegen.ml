@@ -49,8 +49,18 @@ let translate (globals, functions) =
   let printbig_t = L.function_type i32_t [| i32_t |] in
   let printbig_func = L.declare_function "printbig" printbig_t the_module in
 
-  let open_t = L.function_type void_ptr [| str_t |] in
+  let open_t = L.function_type void_ptr [| str_t; str_t|] in
   let open_func = L.declare_function "open" open_t the_module in
+
+  let readFile_t = L.function_type str_t [| void_ptr; i32_t|] in
+  let readFile_func = L.declare_function "readFile" readFile_t the_module in
+
+  let isFileEnd_t = L.function_type i1_t [| void_ptr |] in
+  let isFileEnd_func = L.declare_function "isFileEnd" isFileEnd_t the_module in
+
+  let close_t = L.function_type i32_t [| void_ptr; void_ptr|] in
+  let close_func = L.declare_function "close" close_t the_module in
+
 
 
 
@@ -136,8 +146,14 @@ let translate (globals, functions) =
       |  A.Call ("printstring", [e]) ->
       L.build_call printf_func [| str_format_str; (expr builder e) |]
         "printf" builder
-    | A.Call ("open", [e]) ->
-    L.build_call open_func [| (expr builder e) |] "open" builder
+    | A.Call ("open", [e1;e2]) ->
+    L.build_call open_func [| (expr builder e1); (expr builder e2)|] "open" builder
+    | A.Call ("readFile", [e1;e2]) ->
+    L.build_call readFile_func [| (expr builder e1); (expr builder e2)|] "readFile" builder
+    | A.Call ("isFileEnd", [e1]) ->
+    L.build_call isFileEnd_func [| (expr builder e1)|] "isFileEnd" builder
+    | A.Call ("close", [e1;e2]) ->
+    L.build_call close_func [| (expr builder e1); (expr builder e2)|] "close" builder
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
@@ -156,11 +172,11 @@ let translate (globals, functions) =
     (* Build the code for the given statement; return the builder for
        the statement's successor *)
     let rec stmt builder = function
-	A.Block sl -> List.fold_left stmt builder sl
+	    A.Block sl -> List.fold_left stmt builder sl
       | A.Expr e -> ignore (expr builder e); builder
       | A.Return e -> ignore (match fdecl.A.typ with
-	  A.Void -> L.build_ret_void builder
-	| _ -> L.build_ret (expr builder e) builder); builder
+	                A.Void -> L.build_ret_void builder
+	                | _ -> L.build_ret (expr builder e) builder); builder
       | A.If (predicate, then_stmt, else_stmt) ->
          let bool_val = expr builder predicate in
 	 let merge_bb = L.append_block context "merge" the_function in

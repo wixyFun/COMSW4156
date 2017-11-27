@@ -1,5 +1,7 @@
 int main()
 {
   file myfile;
-  myfile = open("text.txt");
+  string myfilename;
+  myfilename = "text.txt";
+  myfile = open(myfilename);
 }

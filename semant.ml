@@ -74,8 +74,17 @@ let check (globals, functions) =
 	{ typ = Void; fname = "printstring"; formals = [(String, "x")];
 	locals = []; body = [] } built_in_decls in
   let built_in_decls = StringMap.add "open"
-	{ typ =  File; fname = "open"; formals = [(String, "x")];
+	{ typ =  File; fname = "open"; formals = [(String, "x"); (String, "y")];
 	locals = []; body = [] } built_in_decls in
+  let built_in_decls = StringMap.add "open"
+	{ typ = String; fname = "readFile"; formals = [(File, "x"); (Int, "y")];
+	locals = []; body = [] } built_in_decls in
+  let built_in_decls = StringMap.add "isFileEnd"
+  { typ = Bool; fname = "isFileEnd"; formals = [(File, "x")];
+	locals = []; body = [] } built_in_decls in
+  let built_in_decls = StringMap.add "close"
+  { typ = Void; fname = "close"; formals = [(File, "x"); (String, "y")];
+  locals = []; body = [] } built_in_decls in
    (* (StringMap.singleton "printstring"
       { typ = Void; fname = "printstring"; formals = [(String,"x")];
       locals = []; body = []})*)
@@ -168,6 +177,7 @@ let check (globals, functions) =
          | s :: ss -> stmt s ; check_block ss
          | [] -> ()
         in check_block sl
+
       | Expr e -> ignore (expr e)
       | Return e -> let t = expr e in if t = func.typ then () else
          raise (Failure ("return gives " ^ string_of_typ t ^ " expected " ^

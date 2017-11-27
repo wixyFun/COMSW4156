@@ -56,6 +56,15 @@ let string_of_op = function
   | And -> "&&"
   | Or -> "||"
 
+  let string_of_typ = function
+      Int -> "int"
+    | Bool -> "bool"
+    | Void -> "void"
+    | String -> "string"
+    | File -> "file"
+
+  let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
+
 let string_of_uop = function
     Neg -> "-"
   | Not -> "!"
@@ -87,14 +96,8 @@ let rec string_of_stmt = function
       string_of_expr e3  ^ ") " ^ string_of_stmt s
   | While(e, s) -> "while (" ^ string_of_expr e ^ ") " ^ string_of_stmt s
 
-let string_of_typ = function
-    Int -> "int"
-  | Bool -> "bool"
-  | Void -> "void"
-  | String -> "string"
-  | File -> "file"
 
-let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"
+
 
 let string_of_fdecl fdecl =
   string_of_typ fdecl.typ ^ " " ^
