@@ -7,13 +7,13 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-void* open(void* filename1, char * mode)
+void* open(void* filename1, char* mode)
 {
 
 
    //static const char filename[] = "text.txt";
    char *filename = (char *)filename1;
-   FILE *mfile = fopen ( filename, mode );
+   FILE *mfile = fopen ( filename , mode);
 
    /*
    if ( mfile != NULL )
@@ -63,6 +63,7 @@ void* open(void* filename1, char * mode)
 bool isFileEnd (void * fp_void)
 {
   FILE * fp = (FILE *) fp_void;
+  
    if (!feof(fp))
      return false;
    else
