@@ -24,14 +24,16 @@ let translate (globals, functions) =
   and i32_t  = L.i32_type  context
   and str_t  = L.pointer_type (L.i8_type context)
   and i1_t   = L.i1_type   context
-  and void_t = L.void_type context in
+  and void_t = L.void_type context
+  and void_ptr =  L.pointer_type (L.i8_type context) in
+
 
   let ltype_of_typ = function
       A.Int -> i32_t
     | A.Bool -> i1_t
     | A.String -> str_t
-    | A.Void -> void_t in
-    (* | A.File -> void_ptr in *)
+    | A.Void -> void_t
+    | A.File -> void_ptr in
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
@@ -49,10 +51,17 @@ let translate (globals, functions) =
   let printbig_func = L.declare_function "printbig" printbig_t the_module in
 
 
-  (* Declare the built-in splitfile() function *)
-  let split_by_size_t = L.function_type i32_t [| str_t ; i32_t |] in
+  (* Declare the built-in split_by_size() function *)
+  let split_by_size_t = L.function_type void_ptr [| str_t ; i32_t |] in
   let split_by_size_func = L.declare_function "split_by_size" split_by_size_t the_module in
 
+  (* Declare the built-in split_by_quant() function *)
+  let split_by_quant_t = L.function_type void_ptr [| str_t ; i32_t |] in
+  let split_by_quant_func = L.declare_function "split_by_quant" split_by_quant_t the_module in
+
+
+  let open_t = L.function_type void_ptr [| str_t |] in
+  let open_func = L.declare_function "open" open_t the_module in
 
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
@@ -132,9 +141,13 @@ let translate (globals, functions) =
         L.build_call printbig_func [| (expr builder e) |] "printbig" builder
       | A.Call ("split_by_size", [e;f]) ->
         L.build_call split_by_size_func [| (expr builder e); (expr builder f)|] "split_by_size" builder
+      | A.Call ("split_by_quant", [e;f]) ->
+        L.build_call split_by_quant_func [| (expr builder e); (expr builder f)|] "split_by_quant" builder
       |  A.Call ("printstring", [e]) ->
       L.build_call printf_func [| str_format_str; (expr builder e) |]
         "printf" builder
+      | A.Call ("open", [e]) ->
+          L.build_call open_func [| (expr builder e) |] "open" builder
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in

@@ -78,8 +78,16 @@ let check (globals, functions) =
    locals = []; body = [] } built_in_decls in
 
   let built_in_decls = StringMap.add "split_by_size"
-  { typ = Void; fname = "split_by_size"; formals = [(String, "x");(Int, "y")];
-  locals = []; body = [] } built_in_decls in
+  { typ = File; fname = "split_by_size"; formals = [(File, "x");(Int, "y")];
+    locals = []; body = [] } built_in_decls in
+
+  let built_in_decls = StringMap.add "split_by_quant"
+  { typ = File; fname = "split_by_quant"; formals = [(File, "x");(Int, "y")];
+    locals = []; body = [] } built_in_decls in
+
+  let built_in_decls = StringMap.add "open"
+  	{ typ =  File; fname = "open"; formals = [(String, "x")];
+  	locals = []; body = [] } built_in_decls in
 
 
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)

@@ -1,5 +1,6 @@
 #include<stdio.h>
 #include<string.h>
+#include<stdlib.h>
 
 /*
 Splitting large file into smaller files by file size
@@ -8,32 +9,78 @@ https://stackoverflow.com/questions/30222271/split-file-into-n-smaller-files-in-
 
 // #define SEGMENT long 10 //approximate target size of small file
 
-size_t file_size(char *name);//function definition below
+size_t file_size(FILE *inputFile);//function definition below
 
-void split_by_size(char inputFileName[], int size)
+FILE* split_by_quant(FILE *inputFile, int quant)
 {
-  double segment = (double)size;
-  // double segment = 1000.0; //approximate target size of small file
-  double segments=0;
-  int i, len, accum;
-  FILE *fp1, *fp2;
-  size_t sizeFile = file_size(inputFileName);
-  printf("sizeFile is %lu\n", sizeFile);
-  printf("segment is %f\n", segment);
 
-  printf("file_size / segment is: %f\n", sizeFile / segment);
-  printf("file_size / segment is: %i\n", sizeFile / segment);
-  //  printf("file_size_int / segment is: %i\n", sizeFile_int / segment);
+  int j, len, accum;
 
-  segments = sizeFile/segment + 1;//ensure end of file
-  printf("segments is %i\n", segments);
+  FILE *fp2;
+
+  size_t sizeFile = file_size(inputFile);
+
+  double segment = sizeFile / quant;
+
   char filename[260]={"smallFileName_"};//base name for small files.
-  char largeFileName[]= {"bigbang.txt"};//change to your path
   char smallFileName[260];
   char line[1080];
 
-  fp1 = fopen(largeFileName, "r");
-  if(fp1)
+  FILE *outputFileList[quant];
+
+  for (j=0; j<quant; j++)
+  {
+    accum = 0;
+    sprintf(smallFileName, "%s%d.txt", filename, j);
+    fp2 = fopen(smallFileName, "w");
+    outputFileList[j] = fp2;
+    if(fp2)
+    {
+      while(fgets(line, 1080, inputFile) && accum <= segment)
+      {
+        accum += strlen(line);//track size of growing file
+        fputs(line, fp2);
+      }
+      // fclose(fp2);
+    }
+
+  }
+  rewind(inputFile);
+
+  // for (int i=0;i<quant; i++)
+  // {
+  //   printf("address of file is: %d\n", outputFileList[i]);
+  // }
+
+  return outputFileList;
+}
+
+
+FILE* split_by_size(FILE *inputFile, int size)
+{
+  double segment = (double)size;
+  double segments = 0;
+  int i, len, accum;
+
+  FILE *fp2;
+
+  size_t sizeFile = file_size(inputFile);
+
+  printf("sizeFile is %lu\n", sizeFile);
+  printf("segment is %f\n", segment);
+  printf("file_size / segment is: %f\n", sizeFile / segment);
+  printf("file_size / segment is: %i\n", sizeFile / segment);
+
+  segments = sizeFile/segment ;//ensure end of file
+  printf("segments is %i\n", segments);
+
+  char filename[260]={"smallFileName_"};//base name for small files.
+  char smallFileName[260];
+  char line[1080];
+
+  FILE *outputFileList[quant];
+
+  if(inputFile)
   {
     for(i=0;i<segments;i++)
     {
@@ -42,53 +89,39 @@ void split_by_size(char inputFileName[], int size)
       fp2 = fopen(smallFileName, "w");
       if(fp2)
       {
-        while(fgets(line, 1080, fp1) && accum <= segment)
+        while(fgets(line, 1080, inputFile) && accum <= segment)
         {
           accum += strlen(line);//track size of growing file
           fputs(line, fp2);
         }
-        fclose(fp2);
+        // fclose(fp2);
       }
     }
-    fclose(fp1);
   }
+  rewind(inputFile);
+
+  return outputFileList;
+
 }
 
 
-size_t file_size(char* name)
+size_t file_size(FILE* inputFile)
 {
-  // printf("%s\n", name);
-  //
-  // int i=0;
-  // char edited_name[100];
-  //
-  // while(name[i+2]!='\0')
-  // {
-  //     edited_name[i] = name[i+1];
-  //     i++;
-  // }
-  // edited_name[i]='\0';
-  // printf("%s\n",edited_name);
+  size_t count = -1;  /* number of characters seen */
 
-  // const char* fn = name;
-  char mode[] = "rb";
-  FILE *fp = fopen(name, mode); //must be binary read to get bytes
-
-  size_t length = -1;
-  if (fp)
+  while (inputFile)
   {
-    size_t pos = ftell(fp) ;
-    fseek(fp, 0, SEEK_END);
-    length = ftell(fp);
-    fclose(fp);
+    /* character or EOF flag from input */
+    int ch;
+    ch = fgetc(inputFile);
+    if (ch == EOF)
+    {
+      break;
+    }
+    ++count;
   }
-  else
-  {
-    printf("Couldn't open file - name: %s, mode: %s\n", name, mode);
-  }
-  printf("This is length %i\n", length);
 
-  return length;
-
-
+  printf("Number of characters is %d\n", count);
+  rewind(inputFile);
+  return count;
 }

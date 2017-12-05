@@ -8,7 +8,7 @@ open Ast
 %token PLUS MINUS TIMES DIVIDE ASSIGN NOT
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
 
-%token RETURN IF ELSE FOR WHILE INT BOOL STRING VOID
+%token RETURN IF ELSE FOR WHILE INT BOOL STRING VOID FILE
 
 /*Olesya:this tokens must have value attached to them*/
 
@@ -72,7 +72,7 @@ typ:
   | BOOL { Bool }
   | VOID { Void }
   | STRING { String }
-  /*| FILE { File }*/
+  | FILE { File }
 
 vdecl_list:
     /* nothing */    { [] }
