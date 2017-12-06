@@ -86,8 +86,24 @@ let check (globals, functions) =
     locals = []; body = [] } built_in_decls in
 
   let built_in_decls = StringMap.add "open"
-  	{ typ =  File; fname = "open"; formals = [(String, "x")];
+  	{ typ =  File; fname = "open"; formals = [(String, "x"); (String, "y")];
   	locals = []; body = [] } built_in_decls in
+
+  let built_in_decls = StringMap.add "readFile"
+   	{ typ = String; fname = "readFile"; formals = [(File, "x"); (Int, "y")];
+      locals = []; body = [] } built_in_decls in
+
+  let built_in_decls = StringMap.add "isFileEnd"
+  { typ = Bool; fname = "isFileEnd"; formals = [(File, "x")];
+    locals = []; body = [] } built_in_decls in
+
+  let built_in_decls = StringMap.add "close"
+  { typ = Void; fname = "close"; formals = [(File, "x"); (String, "y")];
+  locals = []; body = [] } built_in_decls in
+
+   let built_in_decls = StringMap.add "strstr"
+   { typ = String; fname = "strstr"; formals = [(String, "x"); (String, "y")];
+   locals = []; body = [] } built_in_decls in
 
 
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)

@@ -11,9 +11,8 @@ https://stackoverflow.com/questions/30222271/split-file-into-n-smaller-files-in-
 
 size_t file_size(FILE *inputFile);//function definition below
 
-FILE* split_by_quant(FILE *inputFile, int quant)
+void* split_by_quant(FILE *inputFile, int quant)
 {
-
   int j, len, accum;
 
   FILE *fp2;
@@ -51,8 +50,9 @@ FILE* split_by_quant(FILE *inputFile, int quant)
   // {
   //   printf("address of file is: %d\n", outputFileList[i]);
   // }
+  FILE ** res = &outputFileList;
 
-  return outputFileList;
+  return (void *) res;
 }
 
 
@@ -60,7 +60,7 @@ FILE* split_by_size(FILE *inputFile, int size)
 {
   double segment = (double)size;
   double segments = 0;
-  int i, len, accum;
+  int i, len, accum, quant;
 
   FILE *fp2;
 
@@ -72,7 +72,8 @@ FILE* split_by_size(FILE *inputFile, int size)
   printf("file_size / segment is: %i\n", sizeFile / segment);
 
   segments = sizeFile/segment ;//ensure end of file
-  printf("segments is %i\n", segments);
+  quant = (int) segments;
+  printf("segments is %i\n", quant);
 
   char filename[260]={"smallFileName_"};//base name for small files.
   char smallFileName[260];
@@ -82,7 +83,7 @@ FILE* split_by_size(FILE *inputFile, int size)
 
   if(inputFile)
   {
-    for(i=0;i<segments;i++)
+    for(i=0;i<quant;i++)
     {
       accum = 0;
       sprintf(smallFileName, "%s%d.txt", filename, i);

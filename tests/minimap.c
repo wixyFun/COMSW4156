@@ -5,7 +5,4 @@ void * minimap(FILE* inputFile, void (*split_ptr)(file), void* (*map_ptr)(file),
   File *splitedFiles = split_ptr(inputFile);
 
 
-  map_ptr
-
-
 }

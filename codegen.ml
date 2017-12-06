@@ -59,9 +59,20 @@ let translate (globals, functions) =
   let split_by_quant_t = L.function_type void_ptr [| str_t ; i32_t |] in
   let split_by_quant_func = L.declare_function "split_by_quant" split_by_quant_t the_module in
 
-
-  let open_t = L.function_type void_ptr [| str_t |] in
+  let open_t = L.function_type void_ptr [| str_t; str_t|] in
   let open_func = L.declare_function "open" open_t the_module in
+
+  let readFile_t = L.function_type str_t [| void_ptr; i32_t|] in
+  let readFile_func = L.declare_function "readFile" readFile_t the_module in
+
+  let isFileEnd_t = L.function_type i1_t [| void_ptr |] in
+  let isFileEnd_func = L.declare_function "isFileEnd" isFileEnd_t the_module in
+
+  let close_t = L.function_type i32_t [| void_ptr; void_ptr|] in
+  let close_func = L.declare_function "close" close_t the_module in
+
+  let strstr_t = L.function_type str_t [| str_t; str_t |] in
+  let strstr_func = L.declare_function "strstr" strstr_t the_module in
 
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
@@ -79,7 +90,7 @@ let translate (globals, functions) =
     let builder = L.builder_at_end context (L.entry_block the_function) in
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
-    let str_format_str = L.build_global_stringptr "%s\n" "fmt" builder in
+    let str_format_str = L.build_global_stringptr "%s" "fmt" builder in
 
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
@@ -144,10 +155,19 @@ let translate (globals, functions) =
       | A.Call ("split_by_quant", [e;f]) ->
         L.build_call split_by_quant_func [| (expr builder e); (expr builder f)|] "split_by_quant" builder
       |  A.Call ("printstring", [e]) ->
-      L.build_call printf_func [| str_format_str; (expr builder e) |]
+        L.build_call printf_func [| str_format_str; (expr builder e) |]
         "printf" builder
-      | A.Call ("open", [e]) ->
-          L.build_call open_func [| (expr builder e) |] "open" builder
+      | A.Call ("open", [e1;e2]) ->
+        L.build_call open_func [| (expr builder e1);(expr builder e2)|] "open" builder
+      | A.Call ("readFile", [e1;e2]) ->
+          L.build_call readFile_func [| (expr builder e1); (expr builder e2)|] "readFile" builder
+      | A.Call ("isFileEnd", [e1]) ->
+          L.build_call isFileEnd_func [| (expr builder e1)|] "isFileEnd" builder
+      | A.Call ("close", [e1;e2]) ->
+          L.build_call close_func [| (expr builder e1); (expr builder e2)|] "close" builder
+      | A.Call ("strstr", [e1;e2]) ->
+        L.build_call strstr_func [| (expr builder e1); (expr builder e2)|]
+          "strstr" builder
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
