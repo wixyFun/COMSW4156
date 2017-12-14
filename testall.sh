@@ -7,10 +7,10 @@
 
 # Path to the LLVM interpreter
 #LLI="lli"
-LLI="/usr/local/opt/llvm@3.8/bin/lli"
+LLI="/usr/local/opt/llvm/bin/lli"
 
 # Path to the LLVM compiler
-LLC="/usr/local/opt/llvm@3.8/bin/llc"
+LLC="/usr/local/opt/llvm/bin/llc"
 
 # Path to the C compiler
 CC="cc"
@@ -94,8 +94,7 @@ Check() {
     generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
     Run "$MICROC" "$1" ">" "${basename}.ll" &&
     Run "$LLC" "${basename}.ll" ">" "${basename}.s" &&
-    Run "$CC" "-o" "${basename}.exe" "${basename}.s" "printbig.o open.o" &&
-    # Run "$CC" "-o" "${basename}.exe" "${basename}.s" "open.o" &&
+    Run "$CC" "-o" "${basename}.exe" "${basename}.s" "split_by_size.o printbig.o open.o" &&
     Run "./${basename}.exe" > "${basename}.out" &&
     Compare ${basename}.out ${reffile}.out ${basename}.diff
 
@@ -170,6 +169,13 @@ if [ ! -f printbig.o ]
 then
     echo "Could not find printbig.o"
     echo "Try \"make printbig.o\""
+    exit 1
+fi
+
+if [ ! -f split_by_size.o ]
+then
+    echo "Could not find split_by_size.o"
+    echo "Try \"make split_by_size.o\""
     exit 1
 fi
 
