@@ -29,7 +29,7 @@ let check (globals, functions) =
   (* Raise an exception of the given rvalue type cannot be assigned to
      the given lvalue type *)
   let check_assign lvaluet rvaluet err =
-     if lvaluet == rvaluet then lvaluet else raise err
+     if lvaluet = rvaluet then lvaluet else raise err
   in
 
   (**** Checking Global Variables ****)
@@ -186,7 +186,9 @@ let check (globals, functions) =
                               Int -> Int
           | _ -> raise (Failure ("attempting to access with a non-integer type"))) in
         matrix_access_type (type_of_identifier s)
-
+      | Len(s) -> (match (type_of_identifier s) with
+            Matrix1DType(_, _) -> Int
+          | _ -> raise(Failure ("cannot get the length of non-1d-matrix")))
       | Dereference(s) -> pointer_type (type_of_identifier s)
       | Matrix1DReference(s) -> check_matrix1D_pointer_type( type_of_identifier s )
       | StringSeq _ -> String
@@ -207,41 +209,36 @@ let check (globals, functions) =
          | _ -> raise (Failure ("illegal unary operator " ^ string_of_uop op ^
 	  		   string_of_typ t ^ " in " ^ string_of_expr ex)))
       | Noexpr -> Void
-      (* | Assign(var, e) as ex -> let lt = type_of_identifier var
-                                and rt = expr e in
-        check_assign lt rt (Failure ("illegal assignment " ^ string_of_typ lt ^
-				     " = " ^ string_of_typ rt ^ " in " ^
-         string_of_expr ex)) *)
       | Assign(e1, e2) as ex -> let lt = ( match e1 with
-          | Matrix1DAccess(s, _) -> (match (type_of_identifier s) with
-                Matrix1DType(t, _) -> (match t with
-                    Int -> Int
-                  | Float -> Float
-                  | _ -> raise ( Failure ("illegal matrix of matrices") )
-                )
-              | _ -> raise ( Failure ("cannot access a primitive") )
-            )
-          | _ -> expr e1)
-        and rt = expr e2 in
-        check_assign lt rt (Failure ("Illegal assignment " ^ string_of_typ lt ^
-                                     " = " ^ string_of_typ rt ^ " in " ^
-                                     string_of_expr ex))
-      | Call(fname, actuals) as call -> let fd = function_decl fname in
-         if List.length actuals != List.length fd.formals then
-           raise (Failure ("expecting " ^ string_of_int
-             (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
-         else
-           List.iter2 (fun (ft, _) e -> let et = expr e in
-              ignore (check_assign ft et
-                (Failure ("illegal actual argument found " ^ string_of_typ et ^
-                " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
-             fd.formals actuals;
-           fd.typ
-    in
+                                                        | Matrix1DAccess(s, _) -> (match (type_of_identifier s) with
+                                                                                  Matrix1DType(t, _) -> (match t with
+                                                                                                            Int -> Int
+                                                                                                          | Float -> Float
+                                                                                                          | _ -> raise ( Failure ("illegal matrix of matrices") )
+                                                                                                        )
+                                                                                | _ -> raise ( Failure ("cannot access a primitive") )
+                                                                              )
+                                                        | _ -> expr e1)
+                  and rt = expr e2 in
+                  check_assign lt rt (Failure ("illegal assignment " ^ string_of_typ lt ^
+                                               " = " ^ string_of_typ rt ^ " in " ^
+                                               string_of_expr ex))
+    | Call(fname, actuals) as call -> let fd = function_decl fname in
+       if List.length actuals != List.length fd.formals then
+         raise (Failure ("expecting " ^ string_of_int
+           (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
+       else
+         List.iter2 (fun (ft, _) e -> let et = expr e in
+            ignore (check_assign ft et
+              (Failure ("illegal actual argument found " ^ string_of_typ et ^
+              " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
+           fd.formals actuals;
+         fd.typ
+  in
 
-    let check_bool_expr e = if expr e != Bool
-     then raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
-     else () in
+  let check_bool_expr e = if expr e != Bool
+   then raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
+   else () in
 
     (* Verify a statement or throw an exception *)
     let rec stmt = function

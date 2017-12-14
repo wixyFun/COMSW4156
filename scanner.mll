@@ -22,12 +22,14 @@ rule token = parse
 | '*'      { TIMES }
 | '/'      { DIVIDE }
 | '='      { ASSIGN }
+
 | "=="     { EQ }
 | "!="     { NEQ }
 | '<'      { LT }
 | "<="     { LEQ }
 | ">"      { GT }
 | ">="     { GEQ }
+
 | "&&"     { AND }
 | "||"     { OR }
 | "!"      { NOT }
@@ -38,14 +40,17 @@ rule token = parse
 | "return" { RETURN }
 | "int"    { INT }
 | "bool"   { BOOL }
+| "float" { FLOAT }
 | "void"   { VOID }
 | "string" { STRING }
 | "true"   { TRUE }
 | "false"  { FALSE }
 | "file"   { FILE }
+|  "len"	 { LEN }
 | ['0'-'9']+ as lxm { LITERAL(int_of_string lxm) }
 | '"'(('\\'_|[^'"'])* as lxm )'"'  { STRING_SEQ(lxm) } (* We added this, a regex for char / num*... add special chars -ryan*)
 | ['a'-'z' 'A'-'Z']['a'-'z' 'A'-'Z' '0'-'9' '_']* as lxm { ID(lxm) }
+| ['0'-'9']* ['.'] ['0'-'9']+ | ['0'-'9']+ ['.'] ['0'-'9']* as lxm  { FLOATLITERAL(float_of_string lxm) }
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
 

@@ -22,6 +22,7 @@ type expr =
   | Unop of uop * expr
   | Assign of expr * expr
   | PointerIncrement of string
+  | Len of string
   | MatrixLiteral of expr list
   | Matrix1DAccess of string * expr
   | Call of string * expr list
@@ -68,6 +69,7 @@ let string_of_uop = function
     Neg -> "-"
   | Not -> "!"
 
+     (*Need to change this!!!!*)
 let string_of_matrix m =
   let rec string_of_matrix_lit = function
       [] -> "]"
@@ -102,6 +104,7 @@ let rec string_of_expr = function
   | MatrixLiteral(m) -> string_of_matrix m
   | Matrix1DAccess(s, r1) -> s ^ "[" ^ (string_of_expr r1) ^ "]"
   | Noexpr -> ""
+  | Len(s) -> "len(" ^ s ^ ")"
   | Matrix1DReference(s) -> "%" ^ s
   | Dereference(s) -> "#" ^ s
   | Call(f, el) ->

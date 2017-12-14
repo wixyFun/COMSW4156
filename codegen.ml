@@ -193,28 +193,133 @@ let translate (globals, functions) =
       | A.Id s -> L.build_load (lookup s) s builder
       | A.MatrixLiteral s -> L.const_array (find_matrix_type s) (Array.of_list (List.map (expr builder) s))
       | A.Matrix1DReference (s) -> build_1D_matrix_argument s builder
-      | A.Binop (e1, op, e2) ->
-	  let e1' = expr builder e1
-	  and e2' = expr builder e2 in
-	  (match op with
-	    A.Add     -> L.build_add
-	  | A.Sub     -> L.build_sub
-	  | A.Mult    -> L.build_mul
-    | A.Div     -> L.build_sdiv
-	  | A.And     -> L.build_and
-	  | A.Or      -> L.build_or
-	  | A.Equal   -> L.build_icmp L.Icmp.Eq
-	  | A.Neq     -> L.build_icmp L.Icmp.Ne
-	  | A.Less    -> L.build_icmp L.Icmp.Slt
-	  | A.Leq     -> L.build_icmp L.Icmp.Sle
-	  | A.Greater -> L.build_icmp L.Icmp.Sgt
-	  | A.Geq     -> L.build_icmp L.Icmp.Sge
-	  ) e1' e2' "tmp" builder
-      | A.Unop(op, e) ->
-	  let e' = expr builder e in
-	  (match op with
-	    A.Neg     -> L.build_neg
-          | A.Not     -> L.build_not) e' "tmp" builder
+      | A.Len s -> (match (type_of_identifier s) with A.Matrix1DType(_, l) -> L.const_int i32_t l (* NEED TO CHANGE THIS!!!!!*)
+                                                    | _ -> L.const_int i32_t 0 )
+                                                    | A.Binop (e1, op, e2) ->
+                                                        let e1' = expr builder e1
+                                                        and e2' = expr builder e2 in
+                                                          let float_bop operator =
+                                                            (match operator with
+                                                              A.Add     -> L.build_fadd
+                                                            | A.Sub     -> L.build_fsub
+                                                            | A.Mult    -> L.build_fmul
+                                                            | A.Div     -> L.build_fdiv
+                                                            | A.And     -> L.build_and
+                                                            | A.Or      -> L.build_or
+                                                            | A.Equal   -> L.build_fcmp L.Fcmp.Oeq
+                                                            | A.Neq     -> L.build_fcmp L.Fcmp.One
+                                                            | A.Less    -> L.build_fcmp L.Fcmp.Olt
+                                                            | A.Leq     -> L.build_fcmp L.Fcmp.Ole
+                                                            | A.Greater -> L.build_fcmp L.Fcmp.Ogt
+                                                            | A.Geq     -> L.build_fcmp L.Fcmp.Oge
+                                                            ) e1' e2' "tmp" builder
+                                                          in
+
+                                                          let int_bop operator =
+                                                            (match operator with
+                                                              A.Add     -> L.build_add
+                                                            | A.Sub     -> L.build_sub
+                                                            | A.Mult    -> L.build_mul
+                                                                  | A.Div     -> L.build_sdiv
+                                                            | A.And     -> L.build_and
+                                                            | A.Or      -> L.build_or
+                                                            | A.Equal   -> L.build_icmp L.Icmp.Eq
+                                                            | A.Neq     -> L.build_icmp L.Icmp.Ne
+                                                            | A.Less    -> L.build_icmp L.Icmp.Slt
+                                                            | A.Leq     -> L.build_icmp L.Icmp.Sle
+                                                            | A.Greater -> L.build_icmp L.Icmp.Sgt
+                                                            | A.Geq     -> L.build_icmp L.Icmp.Sge
+                                                            ) e1' e2' "tmp" builder
+                                                          in
+
+                                                        let string_of_e1'_llvalue = L.string_of_llvalue e1'
+                                                        and string_of_e2'_llvalue = L.string_of_llvalue e2' in
+
+                                                        let space = Str.regexp " " in
+
+                                                        let list_of_e1'_llvalue = Str.split space string_of_e1'_llvalue
+                                                        and list_of_e2'_llvalue = Str.split space string_of_e2'_llvalue in
+
+                                                        let i32_re = Str.regexp "i32\\|i32*\\|i8\\|i8*\\|i1\\|i1*"
+                                                        and float_re = Str.regexp "double\\|double*" in
+
+                                                        let rec match_string regexp str_list i =
+                                                         let length = List.length str_list in
+                                                         match (Str.string_match regexp (List.nth str_list i) 0) with
+                                                           true -> true
+                                                         | false -> if (i > length - 2) then false else match_string regexp str_list (succ i) in
+
+                                                        let get_type llvalue =
+                                                           match (match_string i32_re llvalue 0) with
+                                                             true  -> "int"
+                                                           | false -> (match (match_string float_re llvalue 0) with
+                                                                         true -> "float"
+                                                                       | false -> "") in
+
+                                                        let e1'_type = get_type list_of_e1'_llvalue
+                                                        and e2'_type = get_type list_of_e2'_llvalue in
+
+                                                        let build_ops_with_types typ1 typ2 =
+                                                          match (typ1, typ2) with
+                                                            "int", "int" -> int_bop op
+                                                          | "float" , "float" -> float_bop op
+                                                          | _, _ -> raise(IllegalAssignment)
+                                                        in
+                                                        build_ops_with_types e1'_type e2'_type
+                                                      | A.Unop(op, e) ->
+                                                        let e' = expr builder e in
+
+                                                        let float_uops operator =
+                                                          match operator with
+                                                            A.Neg -> L.build_fneg e' "tmp" builder
+                                                          | A.Not -> raise(IllegalUnop)  in
+
+                                                        let int_uops operator =
+                                                          match operator with
+                                                            A.Neg -> L.build_neg e' "tmp" builder
+                                                          | A.Not -> L.build_not e' "tmp" builder in
+
+                                                        let bool_uops operator =
+                                                          match operator with
+                                                          A.Neg -> L.build_neg e' "tmp" builder
+                                                          | A.Not -> L.build_not e' "tmp" builder in
+
+                                                        let string_of_e'_llvalue = L.string_of_llvalue e' in
+
+                                                        let space = Str.regexp " " in
+
+                                                        let list_of_e'_llvalue = Str.split space string_of_e'_llvalue in
+
+                                                        let i32_re = Str.regexp "i32\\|i32*"
+                                                        and float_re = Str.regexp "double\\|double*"
+                                                        and bool_re = Str.regexp "i1\\|i1*" in
+
+                                                        let rec match_string regexp str_list i =
+                                                           let length = List.length str_list in
+                                                           match (Str.string_match regexp (List.nth str_list i) 0) with
+                                                             true -> true
+                                                           | false -> if (i > length - 2) then false else match_string regexp str_list (succ i) in
+
+                                                        let get_type llvalue =
+                                                           match (match_string i32_re llvalue 0) with
+                                                             true  -> "int"
+                                                           | false -> (match (match_string float_re llvalue 0) with
+                                                                         true -> "float"
+                                                                       | false -> (match (match_string bool_re llvalue 0) with
+                                                                                    true -> "bool"
+                                                                                  | false -> "")) in
+
+                                                        let e'_type = get_type list_of_e'_llvalue  in
+
+                                                        let build_ops_with_type typ =
+                                                          match typ with
+                                                            "int" -> int_uops op
+                                                          | "float" -> float_uops op
+                                                          | "bool" -> bool_uops op
+                                                          | _ -> raise(IllegalAssignment)
+                                                        in
+
+                                                        build_ops_with_type e'_type
       | A.Assign (e1, e2)  -> let e1' = (match e1 with
                                             A.Id s -> lookup s
                                           | A.Matrix1DAccess (s, e1) -> let i1 = expr builder e1 in (match (type_of_identifier s) with

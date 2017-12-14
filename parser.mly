@@ -7,8 +7,9 @@ open Ast
 %token SEMI LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK COMMA COLON
 %token PLUS MINUS TIMES DIVIDE ASSIGN NOT
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
+%token LEN
 
-%token RETURN IF ELSE FOR WHILE INT BOOL STRING VOID FILE
+%token RETURN IF ELSE FOR WHILE INT BOOL STRING FLOAT VOID FILE
 
 /* Reference and Dereference */
 %token OCTOTHORP PERCENT
@@ -77,6 +78,7 @@ formal_list:
 typ:
     INT { Int }
   | BOOL { Bool }
+  | FLOAT { Float }
   | VOID { Void }
   | STRING { String }
   | matrix1D_typ { $1 }
@@ -135,11 +137,11 @@ expr:
   | expr OR     expr { Binop($1, Or,    $3) }
   | MINUS expr %prec NEG { Unop(Neg, $2) }
   | NOT expr         { Unop(Not, $2) }
-  /*| ID ASSIGN expr   { Assign($1, $3) }*/
   | expr ASSIGN expr                              { Assign($1, $3)  }
   | LPAREN expr RPAREN { $2 }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
   | LBRACK matrix_literal RBRACK  { MatrixLiteral(List.rev $2) }
+  | LEN LPAREN ID RPAREN                          { Len($3) }
   | ID LBRACK expr  RBRACK %prec NOLBRACK         { Matrix1DAccess($1, $3)}
   | PERCENT ID                                    { Matrix1DReference($2)}
   | OCTOTHORP ID                                  { Dereference($2)}
