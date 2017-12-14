@@ -1,69 +1,48 @@
 /*
 * Files I/O library
-* https://www.cprogramming.com/tutorial/cfileio.html
+*
 */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+//
+// extern int addjamie(int a, int b);
+// extern FILE** split(FILE* inputfile);
+
+
 
 void* open(void* filename1, char* mode)
 {
-
-
-   //static const char filename[] = "text.txt";
    char *filename = (char *)filename1;
-   FILE *mfile = fopen ( filename , mode);
+   FILE *mfile = fopen (filename , mode);
 
-   /*
-   if ( mfile != NULL )
-   {
-      char line [ 128 ];
-      while ( fgets ( line, sizeof line, mfile ) != NULL )
-      {
-         fputs ( line, stdout );
-      }
+  //  int result = addjamie(1,3);
+  //  printf("THis is printjamie: %i\n", result);
 
-   }
-   else
-   {
-      perror ( filename );
-   }
+  //  split(mfile);
 
-   */
-  /*printf("%s\n", filename );*/
-  //printf("hello\n");
-
-  return (void *)mfile;
-
+   return (void *)mfile;
 }
 
-//
-
- void* readFile(void * fp_void, int size_buf)
+void* readFile(void * fp_void, int size_buf)
  {
    FILE * fp = (FILE *) fp_void;
-
    char *buffer = malloc(size_buf+1);
-
    if ( fp != NULL )
    {
-      fgets ( buffer, sizeof buffer, fp );
-
+      fgets (buffer, sizeof buffer, fp);
    }
    else
    {
       return NULL;
    }
-
    return (void *) buffer;
-
  }
 
 bool isFileEnd (void * fp_void)
 {
   FILE * fp = (FILE *) fp_void;
-
    if (!feof(fp))
      return false;
    else
@@ -74,39 +53,26 @@ bool isFileEnd (void * fp_void)
  void close(void * fp_void, void * buffer)
  {
    FILE * fp = (FILE *) fp_void;
-
    free(buffer);
    fclose(fp);
-
  }
 
-
-void miniMap(FILE * fileHandler, int (*func_ptr)(int,int))
-{
-    printf("%d\n", 100);
-
-    func_ptr(2,3);
-
-
-    //return true;
-}
 
 #ifdef BUILD_TEST
 int main(void)
 {
+void * temp = open("text.txt", "r");
+ FILE * fp = (FILE *) temp;
 
-  void * temp = open("text.txt", "r");
-  FILE * fp = (FILE *) temp;
+ char * buf;
 
-  char * buf;
+ while(! isFileEnd(fp))
+ {
+   buf = readFile(fp, 200);
+   printf("%s\n", buf );
+ }
 
-  while(! isFileEnd(fp))
-  {
-    buf = readFile(fp, 200);
-    printf("%s\n", buf );
-  }
 
-  close(fp,buf);
-
+ close(fp,buf);
 }
 #endif

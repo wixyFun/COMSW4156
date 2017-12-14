@@ -29,7 +29,7 @@ let check (globals, functions) =
   (* Raise an exception of the given rvalue type cannot be assigned to
      the given lvalue type *)
   let check_assign lvaluet rvaluet err =
-     if lvaluet == rvaluet then lvaluet else raise err
+     if lvaluet = rvaluet then lvaluet else raise err
   in
 
   (**** Checking Global Variables ****)
@@ -63,45 +63,54 @@ let check (globals, functions) =
 
   let built_in_decls = StringMap.add "print"
 	{ typ = Void; fname = "print"; formals = [(Int, "x")];
-	locals = []; body = [] } built_in_decls in
+   locals = []; body = [] } built_in_decls in
+
   let built_in_decls = StringMap.add "printb"
 	{ typ = Void; fname = "printb"; formals = [(Bool, "x")];
-	locals = []; body = [] } built_in_decls  in
+   locals = []; body = [] } built_in_decls  in
+
   let built_in_decls = StringMap.add "printbig"
 	{ typ = Void; fname = "printbig"; formals = [(Int, "x")];
-	locals = []; body = [] } built_in_decls in
+   locals = []; body = [] } built_in_decls in
+
   let built_in_decls = StringMap.add "printstring"
 	{ typ = Void; fname = "printstring"; formals = [(String, "x")];
-	locals = []; body = [] } built_in_decls in
+   locals = []; body = [] } built_in_decls in
+
+  let built_in_decls = StringMap.add "split_by_size"
+  { typ = File; fname = "split_by_size"; formals = [(File, "x");(Int, "y")];
+    locals = []; body = [] } built_in_decls in
+
+  let built_in_decls = StringMap.add "split_by_quant"
+  { typ = File; fname = "split_by_quant"; formals = [(File, "x");(Int, "y")];
+    locals = []; body = [] } built_in_decls in
+
   let built_in_decls = StringMap.add "open"
-	{ typ =  File; fname = "open"; formals = [(String, "x"); (String, "y")];
-	locals = []; body = [] } built_in_decls in
+  	{ typ =  File; fname = "open"; formals = [(String, "x"); (String, "y")];
+  	locals = []; body = [] } built_in_decls in
+
   let built_in_decls = StringMap.add "readFile"
-	{ typ = String; fname = "readFile"; formals = [(File, "x"); (Int, "y")];
-	locals = []; body = [] } built_in_decls in
+   	{ typ = String; fname = "readFile"; formals = [(File, "x"); (Int, "y")];
+      locals = []; body = [] } built_in_decls in
+
   let built_in_decls = StringMap.add "isFileEnd"
   { typ = Bool; fname = "isFileEnd"; formals = [(File, "x")];
-	locals = []; body = [] } built_in_decls in
+    locals = []; body = [] } built_in_decls in
+
   let built_in_decls = StringMap.add "close"
   { typ = Void; fname = "close"; formals = [(File, "x"); (String, "y")];
   locals = []; body = [] } built_in_decls in
-  let built_in_decls = StringMap.add "strstr"
-  { typ = String; fname = "strstr"; formals = [(String, "x"); (String, "y")];
-  locals = []; body = [] } built_in_decls in
 
-  let built_in_decls = StringMap.add "miniMap"
-  { typ = Void; fname = "miniMap"; formals = [(File, "x")];
-  locals = []; body = [] } built_in_decls in
-   (* (StringMap.singleton "printstring"
-      { typ = Void; fname = "printstring"; formals = [(String,"x")];
-      locals = []; body = []})*)
+   let built_in_decls = StringMap.add "strstr"
+   { typ = String; fname = "strstr"; formals = [(String, "x"); (String, "y")];
+   locals = []; body = [] } built_in_decls in
 
 
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
                          built_in_decls functions
   in
 
-  let function_decl s =  try StringMap.find s function_decls
+  let function_decl s = try StringMap.find s function_decls
        with Not_found -> raise (Failure ("unrecognized function " ^ s))
   in
 
@@ -130,12 +139,58 @@ let check (globals, functions) =
       try StringMap.find s symbols
       with Not_found -> raise (Failure ("undeclared identifier " ^ s))
     in
+    let matrix_access_type = function
+    Matrix1DType(t, _) -> t
+    | _ -> raise (Failure ("illegal matrix access") )
+  in
+
+  let check_pointer_type = function
+      Matrix1DPointer(t) -> Matrix1DPointer(t)
+    | _ -> raise ( Failure ("cannot increment a non-pointer type") )
+  in
+
+  let check_matrix1D_pointer_type = function
+    Matrix1DType(p, _) -> Matrix1DPointer(p)
+    | _ -> raise ( Failure ("cannont reference non-1Dmatrix pointer type"))
+  in
+
+
+  let pointer_type = function
+    | Matrix1DPointer(t) -> t
+    | _ -> raise ( Failure ("cannot dereference a non-pointer type")) in
+
+  let matrix_type s = match (List.hd s) with
+    | Literal _ -> Matrix1DType(Int, List.length s)
+    | FloatLiteral _ -> Matrix1DType(Float, List.length s)
+    | BoolLit _ -> Matrix1DType(Bool, List.length s)
+    | _ -> raise ( Failure ("Cannot instantiate a matrix of that type")) in
+
+  let rec check_all_matrix_literal m ty idx =
+    let length = List.length m in
+    match (ty, List.nth m idx) with
+      (Matrix1DType(Int, _), Literal _) -> if idx == length - 1 then Matrix1DType(Int, length) else check_all_matrix_literal m (Matrix1DType(Int, length)) (succ idx)
+    | (Matrix1DType(Float, _), FloatLiteral _) -> if idx == length - 1 then Matrix1DType(Float, length) else check_all_matrix_literal m (Matrix1DType(Float, length)) (succ idx)
+    | (Matrix1DType(Bool, _), BoolLit _) -> if idx == length - 1 then Matrix1DType(Bool, length) else check_all_matrix_literal m (Matrix1DType(Bool, length)) (succ idx)
+    | _ -> raise (Failure ("illegal matrix literal"))
+  in
 
     (* Return the type of an expression or throw an exception *)
     let rec expr = function
-	Literal _ -> Int
+	      Literal _ -> Int
       | BoolLit _ -> Bool
+      | FloatLiteral _ -> Float
       | Id s -> type_of_identifier s
+      | PointerIncrement(s) -> check_pointer_type (type_of_identifier s)
+      | MatrixLiteral s -> check_all_matrix_literal s (matrix_type s) 0
+      | Matrix1DAccess(s, e1) -> let _ = (match (expr e1) with
+                              Int -> Int
+          | _ -> raise (Failure ("attempting to access with a non-integer type"))) in
+        matrix_access_type (type_of_identifier s)
+      | Len(s) -> (match (type_of_identifier s) with
+            Matrix1DType(_, _) -> Int
+          | _ -> raise(Failure ("cannot get the length of non-1d-matrix")))
+      | Dereference(s) -> pointer_type (type_of_identifier s)
+      | Matrix1DReference(s) -> check_matrix1D_pointer_type( type_of_identifier s )
       | StringSeq _ -> String
       | Binop(e1, op, e2) as e -> let t1 = expr e1 and t2 = expr e2 in
 	(match op with
@@ -154,30 +209,36 @@ let check (globals, functions) =
          | _ -> raise (Failure ("illegal unary operator " ^ string_of_uop op ^
 	  		   string_of_typ t ^ " in " ^ string_of_expr ex)))
       | Noexpr -> Void
-      | Assign(var, e) as ex -> let lt = type_of_identifier var
-                                and rt = expr e in
-        check_assign lt rt (Failure ("illegal assignment " ^ string_of_typ lt ^
-				     " = " ^ string_of_typ rt ^ " in " ^
-				     string_of_expr ex))
+      | Assign(e1, e2) as ex -> let lt = ( match e1 with
+                                                        | Matrix1DAccess(s, _) -> (match (type_of_identifier s) with
+                                                                                  Matrix1DType(t, _) -> (match t with
+                                                                                                            Int -> Int
+                                                                                                          | Float -> Float
+                                                                                                          | _ -> raise ( Failure ("illegal matrix of matrices") )
+                                                                                                        )
+                                                                                | _ -> raise ( Failure ("cannot access a primitive") )
+                                                                              )
+                                                        | _ -> expr e1)
+                  and rt = expr e2 in
+                  check_assign lt rt (Failure ("illegal assignment " ^ string_of_typ lt ^
+                                               " = " ^ string_of_typ rt ^ " in " ^
+                                               string_of_expr ex))
+    | Call(fname, actuals) as call -> let fd = function_decl fname in
+       if List.length actuals != List.length fd.formals then
+         raise (Failure ("expecting " ^ string_of_int
+           (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
+       else
+         List.iter2 (fun (ft, _) e -> let et = expr e in
+            ignore (check_assign ft et
+              (Failure ("illegal actual argument found " ^ string_of_typ et ^
+              " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
+           fd.formals actuals;
+         fd.typ
+  in
 
-      | Call(fname, actuals) as call -> let fd = function_decl fname in
-          if fname <> "miniMap" then
-             if List.length actuals != List.length fd.formals  then
-
-                       raise (Failure ("expecting " ^ string_of_int
-                         (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
-             else
-               List.iter2 (fun (ft, _) e -> let et = expr e in
-                  ignore (check_assign ft et
-                    (Failure ("illegal actual argument found " ^ string_of_typ et ^
-                    " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
-                 fd.formals actuals;
-               fd.typ
-       in
-
-    let check_bool_expr e = if expr e != Bool
-     then raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
-     else () in
+  let check_bool_expr e = if expr e != Bool
+   then raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
+   else () in
 
     (* Verify a statement or throw an exception *)
     let rec stmt = function
@@ -188,7 +249,6 @@ let check (globals, functions) =
          | s :: ss -> stmt s ; check_block ss
          | [] -> ()
         in check_block sl
-
       | Expr e -> ignore (expr e)
       | Return e -> let t = expr e in if t = func.typ then () else
          raise (Failure ("return gives " ^ string_of_typ t ^ " expected " ^

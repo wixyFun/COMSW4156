@@ -1,3 +1,8 @@
+int addjamie(int a, int b)
+{
+  return a+b;
+}
+
 int main()
 {
   file myfile;
