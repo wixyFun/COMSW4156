@@ -63,7 +63,7 @@ void* open(void* filename1, char* mode)
 bool isFileEnd (void * fp_void)
 {
   FILE * fp = (FILE *) fp_void;
-  
+
    if (!feof(fp))
      return false;
    else
@@ -81,6 +81,15 @@ bool isFileEnd (void * fp_void)
  }
 
 
+void miniMap(FILE * fileHandler, int (*func_ptr)(int,int))
+{
+    printf("%d\n", 100);
+
+    func_ptr(2,3);
+
+
+    //return true;
+}
 
 #ifdef BUILD_TEST
 int main(void)
@@ -96,7 +105,6 @@ int main(void)
     buf = readFile(fp, 200);
     printf("%s\n", buf );
   }
-
 
   close(fp,buf);
 

@@ -75,6 +75,7 @@ typ:
   | STRING { String }
   | FILE { File }
 
+
 vdecl_list:
     /* nothing */    { [] }
   | vdecl_list vdecl { $2 :: $1 }

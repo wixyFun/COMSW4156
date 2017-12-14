@@ -88,15 +88,20 @@ let check (globals, functions) =
   let built_in_decls = StringMap.add "strstr"
   { typ = String; fname = "strstr"; formals = [(String, "x"); (String, "y")];
   locals = []; body = [] } built_in_decls in
+
+  let built_in_decls = StringMap.add "miniMap"
+  { typ = Void; fname = "miniMap"; formals = [(File, "x")];
+  locals = []; body = [] } built_in_decls in
    (* (StringMap.singleton "printstring"
       { typ = Void; fname = "printstring"; formals = [(String,"x")];
       locals = []; body = []})*)
+
 
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
                          built_in_decls functions
   in
 
-  let function_decl s = try StringMap.find s function_decls
+  let function_decl s =  try StringMap.find s function_decls
        with Not_found -> raise (Failure ("unrecognized function " ^ s))
   in
 
@@ -154,18 +159,21 @@ let check (globals, functions) =
         check_assign lt rt (Failure ("illegal assignment " ^ string_of_typ lt ^
 				     " = " ^ string_of_typ rt ^ " in " ^
 				     string_of_expr ex))
+
       | Call(fname, actuals) as call -> let fd = function_decl fname in
-         if List.length actuals != List.length fd.formals then
-           raise (Failure ("expecting " ^ string_of_int
-             (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
-         else
-           List.iter2 (fun (ft, _) e -> let et = expr e in
-              ignore (check_assign ft et
-                (Failure ("illegal actual argument found " ^ string_of_typ et ^
-                " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
-             fd.formals actuals;
-           fd.typ
-    in
+          if fname <> "miniMap" then
+             if List.length actuals != List.length fd.formals  then
+
+                       raise (Failure ("expecting " ^ string_of_int
+                         (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
+             else
+               List.iter2 (fun (ft, _) e -> let et = expr e in
+                  ignore (check_assign ft et
+                    (Failure ("illegal actual argument found " ^ string_of_typ et ^
+                    " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
+                 fd.formals actuals;
+               fd.typ
+       in
 
     let check_bool_expr e = if expr e != Bool
      then raise (Failure ("expected Boolean expression in " ^ string_of_expr e))

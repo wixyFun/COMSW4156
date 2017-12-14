@@ -25,7 +25,10 @@ let translate (globals, functions) =
   and str_t  = L.pointer_type (L.i8_type context)
   and i1_t   = L.i1_type   context
   and void_t = L.void_type context in
-  let void_ptr =  L.pointer_type (L.i8_type context)   in
+  let void_ptr =  L.pointer_type (L.i8_type context) in
+(*
+  let func_ptr = L.pointer_type (L.function_type (L.void_type context) [| L.i32_type  context; L.i32_type  context |] in
+*)
 
   let ltype_of_typ = function
       A.Int -> i32_t
@@ -33,6 +36,7 @@ let translate (globals, functions) =
     | A.String -> str_t
     | A.Void -> void_t
     | A.File -> void_ptr in
+
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
@@ -63,6 +67,9 @@ let translate (globals, functions) =
 
   let strstr_t = L.function_type str_t [| str_t; str_t |] in
   let strstr_func = L.declare_function "strstr" strstr_t the_module in
+
+  let miniMap_t = L.function_type i32_t [| void_ptr; L.pointer_type (L.function_type (i32_t) [| L.i32_type  context; L.i32_type  context |] )|] in
+  let miniMap_func = L.declare_function "miniMap" miniMap_t the_module in
 
 
 
@@ -107,8 +114,18 @@ let translate (globals, functions) =
 
     (* Return the value for a variable or formal argument *)
     let lookup n = try StringMap.find n local_vars
-                   with Not_found -> StringMap.find n global_vars
+                   with Not_found ->
+                   StringMap.find n global_vars
     in
+(*
+                   with Not_found -> match
+                   StringMap.find n function_decls with
+                   |(y,_)-> ignore(build_alloca    builder);
+(*build_alloca ty name b creates a %name = alloca %ty instruction at the position specified by the instruction builder b.*)
+(*build_store v p b creates a store %v, %p instruction at the position specified by the instruction builder b.*)
+
+*)
+
 
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
@@ -160,7 +177,15 @@ let translate (globals, functions) =
     L.build_call isFileEnd_func [| (expr builder e1)|] "isFileEnd" builder
     | A.Call ("close", [e1;e2]) ->
     L.build_call close_func [| (expr builder e1); (expr builder e2)|] "close" builder
-      | A.Call (f, act) ->
+    | A.Call ("miniMap", [e1; A.Id(e2)]) ->
+      let fileptr = expr builder e1 in
+
+
+    let (fdef,_) = StringMap.find e2 function_decls in
+
+     L.build_call miniMap_func [|fileptr; fdef |] "miniMap" builder
+
+    | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
 	 let result = (match fdecl.A.typ with A.Void -> ""
