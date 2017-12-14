@@ -6,25 +6,21 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
-extern int addjamie(int a, int b);
-extern FILE** split(FILE* inputfile);
-
-
-// void minimap(FILE* inputFileName)
-// {
 //
-// }
+// extern int addjamie(int a, int b);
+// extern FILE** split(FILE* inputfile);
+
+
 
 void* open(void* filename1, char* mode)
 {
    char *filename = (char *)filename1;
    FILE *mfile = fopen (filename , mode);
 
-   int result = addjamie(1,3);
-   printf("THis is printjamie: %i\n", result);
+  //  int result = addjamie(1,3);
+  //  printf("THis is printjamie: %i\n", result);
 
-   split(mfile);
+  //  split(mfile);
 
    return (void *)mfile;
 }

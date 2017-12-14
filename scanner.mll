@@ -7,9 +7,15 @@ rule token = parse
 | "/*"     { comment lexbuf }           (* Comments *)
 | '('      { LPAREN }
 | ')'      { RPAREN }
+| '['      { LBRACK }
+|  ']'     { RBRACK }
 | '{'      { LBRACE }
 | '}'      { RBRACE }
+(* Reference Dereference *)
+| '%'      { PERCENT }
+| '#'      { OCTOTHORP }
 | ';'      { SEMI }
+| ':'      { COLON }
 | ','      { COMMA }
 | '+'      { PLUS }
 | '-'      { MINUS }

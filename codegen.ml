@@ -14,6 +14,8 @@ http://llvm.moe/ocaml/
 
 module L = Llvm
 module A = Ast
+open Exceptions
+
 
 module StringMap = Map.Make(String)
 
@@ -24,7 +26,10 @@ let translate (globals, functions) =
   and i32_t  = L.i32_type  context
   and str_t  = L.pointer_type (L.i8_type context)
   and i1_t   = L.i1_type   context
+  and float_t = L.double_type context
+  and pointer_t = L.pointer_type
   and void_t = L.void_type context
+  and array_t   = L.array_type
   and void_ptr =  L.pointer_type (L.i8_type context) in
 
 
@@ -33,7 +38,18 @@ let translate (globals, functions) =
     | A.Bool -> i1_t
     | A.String -> str_t
     | A.Void -> void_t
-    | A.File -> void_ptr in
+    | A.File -> void_ptr
+    | A.Matrix1DType(typ, size) -> (match typ with
+                                          A.Int -> array_t i32_t size
+                                        | A.Float -> array_t float_t size
+                                        | A.Bool -> array_t i1_t size
+                                        | _ -> raise ( UnsupportedMatrixType )
+    )
+    | A.Matrix1DPointer(t) -> (match t with
+                                      A.Int -> pointer_t i32_t
+                                    | A.Float -> pointer_t float_t
+                                    | _ -> raise (IllegalPointerType))
+  in
 
   (* Declare each global variable; remember its value in a map *)
   let global_vars =
@@ -114,13 +130,69 @@ let translate (globals, functions) =
                    with Not_found -> StringMap.find n global_vars
     in
 
+    let check_function =
+        List.fold_left (fun m (t, n) -> StringMap.add n t m)
+        StringMap.empty (globals @ fdecl.A.formals @ fdecl.A.locals)
+    in
+
+    let type_of_identifier s =
+      let symbols = check_function in
+      StringMap.find s symbols
+    in
+
+    let build_1D_matrix_argument s builder =
+      L.build_in_bounds_gep (lookup s) [| L.const_int i32_t 0; L.const_int i32_t 0 |] s builder
+    in
+
+    let build_1D_matrix_access s i1 i2 builder isAssign =
+    if isAssign
+      then L.build_gep (lookup s) [| i1; i2 |] s builder
+    else
+       L.build_load (L.build_gep (lookup s) [| i1; i2 |] s builder) s builder
+    in
+    let build_pointer_dereference s builder isAssign =
+    if isAssign
+      then L.build_load (lookup s) s builder
+    else
+      L.build_load (L.build_load (lookup s) s builder) s builder
+    in
+    let build_pointer_increment s builder isAssign =
+    if isAssign
+      then L.build_load (L.build_in_bounds_gep (lookup s) [| L.const_int i32_t 1 |] s builder) s builder
+    else
+      L.build_in_bounds_gep (L.build_load (L.build_in_bounds_gep (lookup s) [| L.const_int i32_t 0 |] s builder) s builder) [| L.const_int i32_t 1 |] s builder
+  in
+
+
+  let rec matrix_expression e =
+    match e with
+    | A.Literal i -> i
+    | A.Binop (e1, op, e2) -> (match op with
+          A.Add     -> (matrix_expression e1) + (matrix_expression e2)
+        | A.Sub     -> (matrix_expression e1) - (matrix_expression e2)
+        | A.Mult    -> (matrix_expression e1) * (matrix_expression e2)
+        | A.Div     -> (matrix_expression e1) / (matrix_expression e2)
+        | _ -> 0)
+    | _ -> 0
+  in
+
+  let find_matrix_type matrix =
+    match (List.hd matrix) with
+      A.Literal _ -> ltype_of_typ (A.Int)
+    | A.FloatLiteral _ -> ltype_of_typ (A.Float)
+    | A.BoolLit _ -> ltype_of_typ (A.Bool)
+    | _ -> raise (UnsupportedMatrixType) in
+
     (* Construct code for an expression; return its value *)
     let rec expr builder = function
         A.Literal i -> L.const_int i32_t i
+      | A.FloatLiteral f -> L.const_float float_t f
       | A.StringSeq str -> L.build_global_stringptr str "tmp" builder
       | A.BoolLit b -> L.const_int i1_t (if b then 1 else 0)
       | A.Noexpr -> L.const_int i32_t 0
       | A.Id s -> L.build_load (lookup s) s builder
+      | A.MatrixLiteral s -> L.const_array (find_matrix_type s) (Array.of_list (List.map (expr builder) s))
+      | A.Matrix1DReference (s) -> build_1D_matrix_argument s builder
       | A.Binop (e1, op, e2) ->
 	  let e1' = expr builder e1
 	  and e2' = expr builder e2 in
@@ -143,8 +215,26 @@ let translate (globals, functions) =
 	  (match op with
 	    A.Neg     -> L.build_neg
           | A.Not     -> L.build_not) e' "tmp" builder
-      | A.Assign (s, e) -> let e' = expr builder e in
-	                   ignore (L.build_store e' (lookup s) builder); e'
+      | A.Assign (e1, e2)  -> let e1' = (match e1 with
+                                            A.Id s -> lookup s
+                                          | A.Matrix1DAccess (s, e1) -> let i1 = expr builder e1 in (match (type_of_identifier s) with
+                                                      A.Matrix1DType(_, l) -> (
+                                                        if (matrix_expression e1) >= l then raise(MatrixOutOfBounds)
+                                                        else build_1D_matrix_access s (L.const_int i32_t 0) i1 builder true)
+                                                      | _ -> build_1D_matrix_access s (L.const_int i32_t 0) i1 builder true )
+                                          | A.PointerIncrement(s) -> build_pointer_increment s builder true
+                                          | A.Dereference(s) -> build_pointer_dereference s builder true
+                                          | _ -> raise (IllegalAssignment)
+                                          )
+                            and e2' = expr builder e2 in
+                     ignore (L.build_store e2' e1' builder); e2'
+      | A.Matrix1DAccess (s, e1) -> let i1 = expr builder e1 in (match (type_of_identifier s) with
+                                                                          A.Matrix1DType(_, l) -> (
+                                                                            if (matrix_expression e1) >= l then raise(MatrixOutOfBounds)
+                                                                            else build_1D_matrix_access s (L.const_int i32_t 0) i1 builder false)
+                                                                            | _ -> build_1D_matrix_access s (L.const_int i32_t 0) i1 builder false )
+      | A.PointerIncrement (s) ->  build_pointer_increment s builder false
+      | A.Dereference (s) -> build_pointer_dereference s builder false
       | A.Call ("print", [e]) | A.Call ("printb", [e]) ->
 	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
 	    "printf" builder

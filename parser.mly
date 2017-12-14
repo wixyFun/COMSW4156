@@ -4,14 +4,18 @@
 open Ast
 %}
 /*Olesya:just listing all the tokens without any value attached to them */
-%token SEMI LPAREN RPAREN LBRACE RBRACE COMMA
+%token SEMI LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK COMMA COLON
 %token PLUS MINUS TIMES DIVIDE ASSIGN NOT
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
 
 %token RETURN IF ELSE FOR WHILE INT BOOL STRING VOID FILE
 
+/* Reference and Dereference */
+%token OCTOTHORP PERCENT
+
 /*Olesya:this tokens must have value attached to them*/
 
+%token <float> FLOATLITERAL
 %token <int> LITERAL
 %token <string> STRING_SEQ
 %token <string> ID
@@ -22,6 +26,9 @@ open Ast
 /*associativity of the token, left, right or no assoc*/
 %nonassoc NOELSE
 %nonassoc ELSE
+%nonassoc NOLBRACK
+%nonassoc LBRACK
+
 %right ASSIGN
 %left OR
 %left AND
@@ -72,7 +79,15 @@ typ:
   | BOOL { Bool }
   | VOID { Void }
   | STRING { String }
+  | matrix1D_typ { $1 }
+  | matrix1D_pointer_typ { $1 }
   | FILE { File }
+
+matrix1D_typ:
+    typ LBRACK LITERAL RBRACK %prec NOLBRACK  { Matrix1DType($1, $3) }
+
+matrix1D_pointer_typ:
+    typ LBRACK RBRACK %prec NOLBRACK { Matrix1DPointer($1)}
 
 vdecl_list:
     /* nothing */    { [] }
@@ -101,7 +116,7 @@ expr_opt:
   | expr          { $1 }
 
 expr:
-    LITERAL          { Literal($1) }
+  primitives       { $1 }
   | STRING_SEQ       { StringSeq($1) }
   | TRUE             { BoolLit(true) }
   | FALSE            { BoolLit(false) }
@@ -120,9 +135,24 @@ expr:
   | expr OR     expr { Binop($1, Or,    $3) }
   | MINUS expr %prec NEG { Unop(Neg, $2) }
   | NOT expr         { Unop(Not, $2) }
-  | ID ASSIGN expr   { Assign($1, $3) }
-  | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
+  /*| ID ASSIGN expr   { Assign($1, $3) }*/
+  | expr ASSIGN expr                              { Assign($1, $3)  }
   | LPAREN expr RPAREN { $2 }
+  | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
+  | LBRACK matrix_literal RBRACK  { MatrixLiteral(List.rev $2) }
+  | ID LBRACK expr  RBRACK %prec NOLBRACK         { Matrix1DAccess($1, $3)}
+  | PERCENT ID                                    { Matrix1DReference($2)}
+  | OCTOTHORP ID                                  { Dereference($2)}
+  | PLUS PLUS ID                                  { PointerIncrement($3) }
+
+primitives:
+    LITERAL                                    { Literal($1)   }
+  | FLOATLITERAL                               { FloatLiteral($1) }
+
+matrix_literal:
+    primitives                      { [$1] }
+  | matrix_literal COMMA primitives { $3 :: $1 }
+
 
 actuals_opt:
     /* nothing */ { [] }

@@ -139,12 +139,56 @@ let check (globals, functions) =
       try StringMap.find s symbols
       with Not_found -> raise (Failure ("undeclared identifier " ^ s))
     in
+    let matrix_access_type = function
+    Matrix1DType(t, _) -> t
+    | _ -> raise (Failure ("illegal matrix access") )
+  in
+
+  let check_pointer_type = function
+      Matrix1DPointer(t) -> Matrix1DPointer(t)
+    | _ -> raise ( Failure ("cannot increment a non-pointer type") )
+  in
+
+  let check_matrix1D_pointer_type = function
+    Matrix1DType(p, _) -> Matrix1DPointer(p)
+    | _ -> raise ( Failure ("cannont reference non-1Dmatrix pointer type"))
+  in
+
+
+  let pointer_type = function
+    | Matrix1DPointer(t) -> t
+    | _ -> raise ( Failure ("cannot dereference a non-pointer type")) in
+
+  let matrix_type s = match (List.hd s) with
+    | Literal _ -> Matrix1DType(Int, List.length s)
+    | FloatLiteral _ -> Matrix1DType(Float, List.length s)
+    | BoolLit _ -> Matrix1DType(Bool, List.length s)
+    | _ -> raise ( Failure ("Cannot instantiate a matrix of that type")) in
+
+  let rec check_all_matrix_literal m ty idx =
+    let length = List.length m in
+    match (ty, List.nth m idx) with
+      (Matrix1DType(Int, _), Literal _) -> if idx == length - 1 then Matrix1DType(Int, length) else check_all_matrix_literal m (Matrix1DType(Int, length)) (succ idx)
+    | (Matrix1DType(Float, _), FloatLiteral _) -> if idx == length - 1 then Matrix1DType(Float, length) else check_all_matrix_literal m (Matrix1DType(Float, length)) (succ idx)
+    | (Matrix1DType(Bool, _), BoolLit _) -> if idx == length - 1 then Matrix1DType(Bool, length) else check_all_matrix_literal m (Matrix1DType(Bool, length)) (succ idx)
+    | _ -> raise (Failure ("illegal matrix literal"))
+  in
 
     (* Return the type of an expression or throw an exception *)
     let rec expr = function
-	Literal _ -> Int
+	      Literal _ -> Int
       | BoolLit _ -> Bool
+      | FloatLiteral _ -> Float
       | Id s -> type_of_identifier s
+      | PointerIncrement(s) -> check_pointer_type (type_of_identifier s)
+      | MatrixLiteral s -> check_all_matrix_literal s (matrix_type s) 0
+      | Matrix1DAccess(s, e1) -> let _ = (match (expr e1) with
+                              Int -> Int
+          | _ -> raise (Failure ("attempting to access with a non-integer type"))) in
+        matrix_access_type (type_of_identifier s)
+
+      | Dereference(s) -> pointer_type (type_of_identifier s)
+      | Matrix1DReference(s) -> check_matrix1D_pointer_type( type_of_identifier s )
       | StringSeq _ -> String
       | Binop(e1, op, e2) as e -> let t1 = expr e1 and t2 = expr e2 in
 	(match op with
@@ -163,11 +207,25 @@ let check (globals, functions) =
          | _ -> raise (Failure ("illegal unary operator " ^ string_of_uop op ^
 	  		   string_of_typ t ^ " in " ^ string_of_expr ex)))
       | Noexpr -> Void
-      | Assign(var, e) as ex -> let lt = type_of_identifier var
+      (* | Assign(var, e) as ex -> let lt = type_of_identifier var
                                 and rt = expr e in
         check_assign lt rt (Failure ("illegal assignment " ^ string_of_typ lt ^
 				     " = " ^ string_of_typ rt ^ " in " ^
-				     string_of_expr ex))
+         string_of_expr ex)) *)
+      | Assign(e1, e2) as ex -> let lt = ( match e1 with
+          | Matrix1DAccess(s, _) -> (match (type_of_identifier s) with
+                Matrix1DType(t, _) -> (match t with
+                    Int -> Int
+                  | Float -> Float
+                  | _ -> raise ( Failure ("illegal matrix of matrices") )
+                )
+              | _ -> raise ( Failure ("cannot access a primitive") )
+            )
+          | _ -> expr e1)
+        and rt = expr e2 in
+        check_assign lt rt (Failure ("Illegal assignment " ^ string_of_typ lt ^
+                                     " = " ^ string_of_typ rt ^ " in " ^
+                                     string_of_expr ex))
       | Call(fname, actuals) as call -> let fd = function_decl fname in
          if List.length actuals != List.length fd.formals then
            raise (Failure ("expecting " ^ string_of_int
