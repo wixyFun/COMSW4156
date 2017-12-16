@@ -57,6 +57,16 @@ bool isFileEnd (void * fp_void)
    fclose(fp);
  }
 
+ void miniMap(FILE * fileHandler, int (*func_ptr)(int,int))
+ {
+    printf("%d\n", 100);
+
+    func_ptr(2,3);
+
+
+    //return true;
+ }
+
 
 #ifdef BUILD_TEST
 int main(void)

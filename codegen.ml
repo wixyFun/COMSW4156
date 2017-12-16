@@ -90,6 +90,9 @@ let translate (globals, functions) =
   let strstr_t = L.function_type str_t [| str_t; str_t |] in
   let strstr_func = L.declare_function "strstr" strstr_t the_module in
 
+  let miniMap_t = L.function_type i32_t [| void_ptr; L.pointer_type (L.function_type (i32_t) [| L.i32_type  context; L.i32_type  context |] )|] in
+  let miniMap_func = L.declare_function "miniMap" miniMap_t the_module in
+
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
     let function_decl m fdecl =
@@ -363,6 +366,13 @@ let translate (globals, functions) =
       | A.Call ("strstr", [e1;e2]) ->
         L.build_call strstr_func [| (expr builder e1); (expr builder e2)|]
           "strstr" builder
+      |A.Call ("miniMap", [e1; A.Id(e2)]) ->
+            let fileptr = expr builder e1 in
+
+            let (fdef,_) = StringMap.find e2 function_decls in
+
+            L.build_call miniMap_func [|fileptr; fdef |] "miniMap" builder
+
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in

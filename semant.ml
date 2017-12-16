@@ -105,6 +105,10 @@ let check (globals, functions) =
    { typ = String; fname = "strstr"; formals = [(String, "x"); (String, "y")];
    locals = []; body = [] } built_in_decls in
 
+ (*miniMap will be checked only for the first parameter*)
+   let built_in_decls = StringMap.add "miniMap"
+   { typ = Void; fname = "miniMap"; formals = [(File, "x")];
+   locals = []; body = [] } built_in_decls in
 
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
                          built_in_decls functions
@@ -224,7 +228,8 @@ let check (globals, functions) =
                                                " = " ^ string_of_typ rt ^ " in " ^
                                                string_of_expr ex))
     | Call(fname, actuals) as call -> let fd = function_decl fname in
-       if List.length actuals != List.length fd.formals then
+    if fname <> "miniMap" then
+      if List.length actuals != List.length fd.formals then
          raise (Failure ("expecting " ^ string_of_int
            (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
        else
