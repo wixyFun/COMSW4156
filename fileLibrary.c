@@ -6,10 +6,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
-//
-// extern int addjamie(int a, int b);
-// extern FILE** split(FILE* inputfile);
-
 
 
 void* open(void* filename1, char* mode)
@@ -19,7 +15,6 @@ void* open(void* filename1, char* mode)
 
   //  int result = addjamie(1,3);
   //  printf("THis is printjamie: %i\n", result);
-
   //  split(mfile);
 
    return (void *)mfile;
@@ -63,8 +58,6 @@ bool isFileEnd (void * fp_void)
 
     func_ptr(2,3);
 
-
-    //return true;
  }
 
 

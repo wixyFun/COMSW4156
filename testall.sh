@@ -94,7 +94,7 @@ Check() {
     generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
     Run "$MINIMAP" "$1" ">" "${basename}.ll" &&
     Run "$LLC" "${basename}.ll" ">" "${basename}.s" &&
-    Run "$CC" "-o" "${basename}.exe" "${basename}.s" "split_by_size.o printbig.o open.o" &&
+    Run "$CC" "-o" "${basename}.exe" "${basename}.s" "split_by_size.o printbig.o fileLibrary.o" &&
     Run "./${basename}.exe" > "${basename}.out" &&
     Compare ${basename}.out ${reffile}.out ${basename}.diff
 
