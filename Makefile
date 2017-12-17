@@ -5,19 +5,19 @@
 # Easiest way to build: using ocamlbuild, which in turn uses ocamlfind
 
 .PHONY : all
-all : microc.native printbig.o split_by_size.o  open.o
+all : miniMap.native printbig.o split_by_size.o  open.o
 
-.PHONY : microc.native
-microc.native :
+.PHONY : miniMap.native
+miniMap.native :
 	ocamlbuild -use-ocamlfind -pkgs llvm,llvm.analysis,str -cflags -w,+a-4 \
-		microc.native
+		miniMap.native
 
 # "make clean" removes all generated files
 
 .PHONY : clean
 clean :
 	ocamlbuild -clean
-	rm -rf testall.log *.diff microc scanner.ml parser.ml parser.mli
+	rm -rf testall.log *.diff miniMap scanner.ml parser.ml parser.mli
 	rm -rf printbig
 	rm -rf split_by_size
 	rm -rf open
@@ -26,10 +26,10 @@ clean :
 
 # More detailed: build using ocamlc/ocamlopt + ocamlfind to locate LLVM
 
-OBJS = ast.cmx codegen.cmx parser.cmx scanner.cmx semant.cmx microc.cmx
+OBJS = ast.cmx codegen.cmx parser.cmx scanner.cmx semant.cmx miniMap.cmx
 
-microc : $(OBJS)
-	ocamlfind ocamlopt -linkpkg -package llvm -package llvm.analysis $(OBJS) -o microc
+miniMap : $(OBJS)
+	ocamlfind ocamlopt -linkpkg -package llvm -package llvm.analysis $(OBJS) -o miniMap
 
 scanner.ml : scanner.mll
 	ocamllex scanner.mll
@@ -63,8 +63,8 @@ ast.cmo :
 ast.cmx :
 codegen.cmo : ast.cmo
 codegen.cmx : ast.cmx
-microc.cmo : semant.cmo scanner.cmo parser.cmi codegen.cmo ast.cmo
-microc.cmx : semant.cmx scanner.cmx parser.cmx codegen.cmx ast.cmx
+miniMap.cmo : semant.cmo scanner.cmo parser.cmi codegen.cmo ast.cmo
+miniMap.cmx : semant.cmx scanner.cmx parser.cmx codegen.cmx ast.cmx
 parser.cmo : ast.cmo parser.cmi
 parser.cmx : ast.cmx parser.cmi
 scanner.cmo : parser.cmi
@@ -88,10 +88,10 @@ FAILS = assign1 assign2 assign3 dead1 dead2 expr1 expr2 for1 for2	\
 TESTFILES = $(TESTS:%=test-%.mc) $(TESTS:%=test-%.out) \
 	    $(FAILS:%=fail-%.mc) $(FAILS:%=fail-%.err)
 
-TARFILES = ast.ml codegen.ml Makefile _tags microc.ml parser.mly README \
+TARFILES = ast.ml codegen.ml Makefile _tags miniMap.ml parser.mly README \
         scanner.mll semant.ml testall.sh printbig.c open.c split_by_size.c arcade-font.pbm font2c \
 	$(TESTFILES:%=tests/%)
 
-microc-llvm.tar.gz : $(TARFILES)
-	cd .. && tar czf microc-llvm/microc-llvm.tar.gz \
-		$(TARFILES:%=microc-llvm/%)
+miniMap-llvm.tar.gz : $(TARFILES)
+	cd .. && tar czf miniMap-llvm/miniMap-llvm.tar.gz \
+		$(TARFILES:%=miniMap-llvm/%)

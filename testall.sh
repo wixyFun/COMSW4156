@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Regression testing script for MicroC
+# Regression testing script for miniMap
 # Step through a list of files
 #  Compile, run, and check the output of each expected-to-work test
 #  Compile and check the error of each expected-to-fail test
@@ -15,10 +15,10 @@ LLC="/usr/local/opt/llvm/bin/llc"
 # Path to the C compiler
 CC="cc"
 
-# Path to the microc compiler.  Usually "./microc.native"
-# Try "_build/microc.native" if ocamlbuild was unable to create a symbolic link.
-MICROC="./microc.native"
-#MICROC="_build/microc.native"
+# Path to the miniMap compiler.  Usually "./miniMap.native"
+# Try "_build/miniMap.native" if ocamlbuild was unable to create a symbolic link.
+MINIMAP="./miniMap.native"
+#MINIMAP="_build/miniMap.native"
 
 # Set time limit for all operations
 ulimit -t 30
@@ -92,7 +92,7 @@ Check() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.ll ${basename}.s ${basename}.exe ${basename}.out" &&
-    Run "$MICROC" "$1" ">" "${basename}.ll" &&
+    Run "$MINIMAP" "$1" ">" "${basename}.ll" &&
     Run "$LLC" "${basename}.ll" ">" "${basename}.s" &&
     Run "$CC" "-o" "${basename}.exe" "${basename}.s" "split_by_size.o printbig.o open.o" &&
     Run "./${basename}.exe" > "${basename}.out" &&
@@ -127,7 +127,7 @@ CheckFail() {
     generatedfiles=""
 
     generatedfiles="$generatedfiles ${basename}.err ${basename}.diff" &&
-    RunFail "$MICROC" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
+    RunFail "$MINIMAP" "<" $1 "2>" "${basename}.err" ">>" $globallog &&
     Compare ${basename}.err ${reffile}.err ${basename}.diff
 
     # Report the status and clean up the generated files

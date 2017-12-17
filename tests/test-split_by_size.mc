@@ -8,7 +8,7 @@ int main()
 
 
   myfile = open("bigbang.txt", "r");
-  /*split_by_size(myfile, 500);*/
+  split_by_size(myfile, 500);
 
   /*outputfilelist = split_by_quant(myfile, 10);*/
 

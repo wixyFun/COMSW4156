@@ -21,7 +21,7 @@ module StringMap = Map.Make(String)
 
 let translate (globals, functions) =
   let context = L.global_context () in
-  let the_module = L.create_module context "MicroC"
+  let the_module = L.create_module context "miniMap"
   and i8_t   = L.i8_type   context
   and i32_t  = L.i32_type  context
   and str_t  = L.pointer_type (L.i8_type context)
@@ -36,6 +36,7 @@ let translate (globals, functions) =
   let ltype_of_typ = function
       A.Int -> i32_t
     | A.Bool -> i1_t
+    | A.Float -> float_t
     | A.String -> str_t
     | A.Void -> void_t
     | A.File -> void_ptr

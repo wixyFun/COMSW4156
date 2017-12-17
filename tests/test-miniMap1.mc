@@ -7,19 +7,14 @@ int printAdd(int a, int b)
 }
 
 
-
 int main()
 {
   file myfile;
   string line;
 
-
-
   myfile = open("text.txt", "r");
 
   miniMap(myfile,printAdd);
-
-
 
   while(!isFileEnd(myfile))
   {
