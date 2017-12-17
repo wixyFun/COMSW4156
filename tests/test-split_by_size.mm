@@ -6,7 +6,6 @@ int main()
   file outputfilelist;
   string test;
 
-
   myfile = open("bigbang.txt", "r");
   split_by_size(myfile, 500);
 
