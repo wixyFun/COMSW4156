@@ -50,8 +50,8 @@ void* split_by_quant(FILE *inputFile, int quant)
   // {
   //   printf("address of file is: %d\n", outputFileList[i]);
   // }
-  FILE ** res = &outputFileList;
-
+  // FILE ** res = &outputFileList;
+  void * res ;
   return (void *) res;
 }
 
@@ -67,19 +67,19 @@ FILE* split_by_size(FILE *inputFile, int size)
   size_t sizeFile = file_size(inputFile);
 
   printf("sizeFile is %lu\n", sizeFile);
-  printf("segment is %f\n", segment);
-  printf("file_size / segment is: %f\n", sizeFile / segment);
-  printf("file_size / segment is: %i\n", sizeFile / segment);
+  // printf("segment is %f\n", segment);
+  // printf("file_size / segment is: %f\n", sizeFile / segment);
+  // printf("file_size / segment is: %i\n", sizeFile / segment);
 
   segments = sizeFile/segment ;//ensure end of file
   quant = (int) segments;
-  printf("segments is %i\n", quant);
+  printf("Number of chunks is %i\n", quant);
 
   char filename[260]={"smallFileName_"};//base name for small files.
   char smallFileName[260];
   char line[1080];
 
-  FILE *outputFileList[quant];
+  // FILE *outputFileList[quant];
 
   if(inputFile)
   {
@@ -101,10 +101,12 @@ FILE* split_by_size(FILE *inputFile, int size)
   }
   rewind(inputFile);
 
+  //need to change this to fit miniMap!
+  FILE* outputFileList;
+
   return outputFileList;
 
 }
-
 
 size_t file_size(FILE* inputFile)
 {
@@ -122,7 +124,7 @@ size_t file_size(FILE* inputFile)
     ++count;
   }
 
-  printf("Number of characters is %d\n", count);
+  printf("Number of characters is %zu\n", count);
   rewind(inputFile);
   return count;
 }

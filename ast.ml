@@ -6,7 +6,7 @@ type op = Add | Sub | Mult | Div | Equal | Neq | Less | Leq | Greater | Geq |
 type uop = Neg | Not
 
 (*We added a string here*)
-type typ = Int | Bool | Void | String | File | Float | Matrix1DType of typ * int | Matrix1DPointer of typ
+type typ = Int | Bool | Void | String | File | Float | ArrayType of typ * int | ArrayPointer of typ
 
 
 
@@ -23,10 +23,10 @@ type expr =
   | Assign of expr * expr
   | PointerIncrement of string
   | Len of string
-  | MatrixLiteral of expr list
-  | Matrix1DAccess of string * expr
+  | ArrayLiteral of expr list
+  | ArrayAccess of string * expr
   | Call of string * expr list
-  | Matrix1DReference of string
+  | ArrayReference of string
   | Dereference of string
   | Noexpr
 
@@ -69,31 +69,30 @@ let string_of_uop = function
     Neg -> "-"
   | Not -> "!"
 
-     (*Need to change this!!!!*)
-let string_of_matrix m =
-  let rec string_of_matrix_lit = function
+let string_of_array m =
+  let rec string_of_array_lit = function
       [] -> "]"
     | [hd] -> (match hd with
                 Literal(i) -> string_of_int i
               | FloatLiteral(i) -> string_of_float i
               | BoolLit(i) -> string_of_bool i
               | Id(s) -> s
-              | _ -> raise( Failure("Illegal expression in matrix literal") )) ^ string_of_matrix_lit []
+              | _ -> raise( Failure("Illegal expression in array literal") )) ^ string_of_array_lit []
     | hd::tl -> (match hd with
                     Literal(i) -> string_of_int i ^ ", "
                   | FloatLiteral(i) -> string_of_float i ^ ", "
                   | BoolLit(i) -> string_of_bool i ^ ", "
                   | Id(s) -> s
-                  | _ -> raise( Failure("Illegal expression in matrix literal") )) ^ string_of_matrix_lit tl
+                  | _ -> raise( Failure("Illegal expression in array literal") )) ^ string_of_array_lit tl
   in
-  "[" ^ string_of_matrix_lit m
+  "[" ^ string_of_array_lit m
 
 let rec string_of_expr = function
     Literal(l) -> string_of_int l
   | FloatLiteral(i) -> string_of_float i
   | BoolLit(true) -> "true"
-  | StringSeq(s) -> s
   | BoolLit(false) -> "false"
+  | StringSeq(s) -> s
   | Id(s) -> s
   | Binop(e1, o, e2) ->
       string_of_expr e1 ^ " " ^ string_of_op o ^ " " ^ string_of_expr e2
@@ -101,11 +100,10 @@ let rec string_of_expr = function
   (* | Assign(v, e) -> v ^ " = " ^ string_of_expr e *)
   | Assign(r1, r2) -> (string_of_expr r1) ^ " =  " ^ (string_of_expr r2)
   | PointerIncrement(s) -> "++" ^ s
-  | MatrixLiteral(m) -> string_of_matrix m
-  | Matrix1DAccess(s, r1) -> s ^ "[" ^ (string_of_expr r1) ^ "]"
-  | Noexpr -> ""
+  | ArrayLiteral(m) -> string_of_array m
+  | ArrayAccess(s, r1) -> s ^ "[" ^ (string_of_expr r1) ^ "]"
   | Len(s) -> "len(" ^ s ^ ")"
-  | Matrix1DReference(s) -> "%" ^ s
+  | ArrayReference(s) -> "%" ^ s
   | Dereference(s) -> "#" ^ s
   | Call(f, el) ->
       f ^ "(" ^ String.concat ", " (List.map string_of_expr el) ^ ")"
@@ -131,8 +129,8 @@ let rec string_of_typ = function
   | Float -> "float"
   | String -> "string"
   | File -> "file"
-  | Matrix1DType(t, i1) -> string_of_typ t ^ "[" ^ string_of_int i1 ^ "]"
-  | Matrix1DPointer(t) -> string_of_typ t ^ "[]"
+  | ArrayType(t, i1) -> string_of_typ t ^ "[" ^ string_of_int i1 ^ "]"
+  | ArrayPointer(t) -> string_of_typ t ^ "[]"
 
 
 let string_of_vdecl (t, id) = string_of_typ t ^ " " ^ id ^ ";\n"

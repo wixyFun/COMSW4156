@@ -1,4 +1,4 @@
-(* Semantic checking for the MicroC compiler *)
+(* Semantic checking for the miniMap compiler *)
 
 open Ast
 
@@ -8,6 +8,7 @@ module StringMap = Map.Make(String)
    throws an exception if something is wrong.
 
    Check each global variable, then check each function *)
+
 
 let check (globals, functions) =
 
@@ -143,39 +144,39 @@ let check (globals, functions) =
       try StringMap.find s symbols
       with Not_found -> raise (Failure ("undeclared identifier " ^ s))
     in
-    let matrix_access_type = function
-    Matrix1DType(t, _) -> t
-    | _ -> raise (Failure ("illegal matrix access") )
+    let array_access_type = function
+    ArrayType(t, _) -> t
+    | _ -> raise (Failure ("illegal array access") )
   in
 
   let check_pointer_type = function
-      Matrix1DPointer(t) -> Matrix1DPointer(t)
+      ArrayPointer(t) -> ArrayPointer(t)
     | _ -> raise ( Failure ("cannot increment a non-pointer type") )
   in
 
-  let check_matrix1D_pointer_type = function
-    Matrix1DType(p, _) -> Matrix1DPointer(p)
-    | _ -> raise ( Failure ("cannont reference non-1Dmatrix pointer type"))
+  let check_array_pointer_type = function
+    ArrayType(p, _) -> ArrayPointer(p)
+    | _ -> raise ( Failure ("cannont reference non-array pointer type"))
   in
 
 
   let pointer_type = function
-    | Matrix1DPointer(t) -> t
+    | ArrayPointer(t) -> t
     | _ -> raise ( Failure ("cannot dereference a non-pointer type")) in
 
-  let matrix_type s = match (List.hd s) with
-    | Literal _ -> Matrix1DType(Int, List.length s)
-    | FloatLiteral _ -> Matrix1DType(Float, List.length s)
-    | BoolLit _ -> Matrix1DType(Bool, List.length s)
-    | _ -> raise ( Failure ("Cannot instantiate a matrix of that type")) in
+  let array_type s = match (List.hd s) with
+    | Literal _ -> ArrayType(Int, List.length s)
+    | FloatLiteral _ -> ArrayType(Float, List.length s)
+    | BoolLit _ -> ArrayType(Bool, List.length s)
+    | _ -> raise ( Failure ("Cannot instantiate a array of that type")) in
 
-  let rec check_all_matrix_literal m ty idx =
+  let rec check_all_array_literal m ty idx =
     let length = List.length m in
     match (ty, List.nth m idx) with
-      (Matrix1DType(Int, _), Literal _) -> if idx == length - 1 then Matrix1DType(Int, length) else check_all_matrix_literal m (Matrix1DType(Int, length)) (succ idx)
-    | (Matrix1DType(Float, _), FloatLiteral _) -> if idx == length - 1 then Matrix1DType(Float, length) else check_all_matrix_literal m (Matrix1DType(Float, length)) (succ idx)
-    | (Matrix1DType(Bool, _), BoolLit _) -> if idx == length - 1 then Matrix1DType(Bool, length) else check_all_matrix_literal m (Matrix1DType(Bool, length)) (succ idx)
-    | _ -> raise (Failure ("illegal matrix literal"))
+      (ArrayType(Int, _), Literal _) -> if idx == length - 1 then ArrayType(Int, length) else check_all_array_literal m (ArrayType(Int, length)) (succ idx)
+    | (ArrayType(Float, _), FloatLiteral _) -> if idx == length - 1 then ArrayType(Float, length) else check_all_array_literal m (ArrayType(Float, length)) (succ idx)
+    | (ArrayType(Bool, _), BoolLit _) -> if idx == length - 1 then ArrayType(Bool, length) else check_all_array_literal m (ArrayType(Bool, length)) (succ idx)
+    | _ -> raise (Failure ("illegal array literal"))
   in
 
     (* Return the type of an expression or throw an exception *)
@@ -183,19 +184,19 @@ let check (globals, functions) =
 	      Literal _ -> Int
       | BoolLit _ -> Bool
       | FloatLiteral _ -> Float
+      | ArrayLiteral s -> check_all_array_literal s (array_type s) 0
+      | StringSeq _ -> String
       | Id s -> type_of_identifier s
       | PointerIncrement(s) -> check_pointer_type (type_of_identifier s)
-      | MatrixLiteral s -> check_all_matrix_literal s (matrix_type s) 0
-      | Matrix1DAccess(s, e1) -> let _ = (match (expr e1) with
+      | ArrayAccess(s, e1) -> let _ = (match (expr e1) with
                               Int -> Int
           | _ -> raise (Failure ("attempting to access with a non-integer type"))) in
-        matrix_access_type (type_of_identifier s)
+        array_access_type (type_of_identifier s)
       | Len(s) -> (match (type_of_identifier s) with
-            Matrix1DType(_, _) -> Int
-          | _ -> raise(Failure ("cannot get the length of non-1d-matrix")))
+            ArrayType(_, _) -> Int
+          | _ -> raise(Failure ("cannot get the length of non-array")))
       | Dereference(s) -> pointer_type (type_of_identifier s)
-      | Matrix1DReference(s) -> check_matrix1D_pointer_type( type_of_identifier s )
-      | StringSeq _ -> String
+      | ArrayReference(s) -> check_array_pointer_type( type_of_identifier s )
       | Binop(e1, op, e2) as e -> let t1 = expr e1 and t2 = expr e2 in
 	(match op with
           Add | Sub | Mult | Div when t1 = Int && t2 = Int -> Int
@@ -214,11 +215,11 @@ let check (globals, functions) =
 	  		   string_of_typ t ^ " in " ^ string_of_expr ex)))
       | Noexpr -> Void
       | Assign(e1, e2) as ex -> let lt = ( match e1 with
-                                                        | Matrix1DAccess(s, _) -> (match (type_of_identifier s) with
-                                                                                  Matrix1DType(t, _) -> (match t with
+                                                        | ArrayAccess(s, _) -> (match (type_of_identifier s) with
+                                                                                  ArrayType(t, _) -> (match t with
                                                                                                             Int -> Int
                                                                                                           | Float -> Float
-                                                                                                          | _ -> raise ( Failure ("illegal matrix of matrices") )
+                                                                                                          | _ -> raise ( Failure ("illegal array") )
                                                                                                         )
                                                                                 | _ -> raise ( Failure ("cannot access a primitive") )
                                                                               )

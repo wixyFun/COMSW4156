@@ -1,20 +1,18 @@
-/* Ocamlyacc parser for MicroC */
+/* Ocamlyacc parser for miniMap */
 
 %{
 open Ast
 %}
-/*Olesya:just listing all the tokens without any value attached to them */
+
 %token SEMI LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK COMMA COLON
 %token PLUS MINUS TIMES DIVIDE ASSIGN NOT
 %token EQ NEQ LT LEQ GT GEQ TRUE FALSE AND OR
-%token LEN
+%token FILE INT BOOL STRING FLOAT VOID
 
-%token RETURN IF ELSE FOR WHILE INT BOOL STRING FLOAT VOID FILE
+%token RETURN IF ELSE FOR WHILE
 
-/* Reference and Dereference */
-%token OCTOTHORP PERCENT
-
-/*Olesya:this tokens must have value attached to them*/
+/* Array related: Reference and Dereference and len */
+%token OCTOTHORP PERCENT LEN
 
 %token <float> FLOATLITERAL
 %token <int> LITERAL
@@ -22,9 +20,8 @@ open Ast
 %token <string> ID
 %token EOF
 
-
-/*Olesya: the presedence of the tokens, bottom is the highest */
-/*associativity of the token, left, right or no assoc*/
+/* the presedence of the tokens, bottom is the highest */
+/* associativity of the token, left, right or no assoc */
 %nonassoc NOELSE
 %nonassoc ELSE
 %nonassoc NOLBRACK
@@ -39,16 +36,15 @@ open Ast
 %left TIMES DIVIDE
 %right NOT NEG
 
-/*Olesya: specifies where your program starts */
+/* specifies where your program starts */
 %start program
 
-/*Olesya: defines what the program is, token program with the value of <Ast.program>*/
+/* defines what the program is, token program with the value of <Ast.program>*/
 %type <Ast.program> program
 
 %%
 
 
-/*rules that mirow the ast*/
 /*the syntax : symbol … symbol { semantic-action }*/
 
 program:
@@ -81,15 +77,15 @@ typ:
   | FLOAT { Float }
   | VOID { Void }
   | STRING { String }
-  | matrix1D_typ { $1 }
-  | matrix1D_pointer_typ { $1 }
+  | array_typ { $1 }
+  | array_pointer_typ { $1 }
   | FILE { File }
 
-matrix1D_typ:
-    typ LBRACK LITERAL RBRACK %prec NOLBRACK  { Matrix1DType($1, $3) }
+array_typ:
+    typ LBRACK LITERAL RBRACK %prec NOLBRACK  { ArrayType($1, $3) }
 
-matrix1D_pointer_typ:
-    typ LBRACK RBRACK %prec NOLBRACK { Matrix1DPointer($1)}
+array_pointer_typ:
+    typ LBRACK RBRACK %prec NOLBRACK { ArrayPointer($1)}
 
 vdecl_list:
     /* nothing */    { [] }
@@ -140,10 +136,10 @@ expr:
   | expr ASSIGN expr                              { Assign($1, $3)  }
   | LPAREN expr RPAREN { $2 }
   | ID LPAREN actuals_opt RPAREN { Call($1, $3) }
-  | LBRACK matrix_literal RBRACK  { MatrixLiteral(List.rev $2) }
+  | LBRACK array_literal RBRACK  { ArrayLiteral(List.rev $2) }
   | LEN LPAREN ID RPAREN                          { Len($3) }
-  | ID LBRACK expr  RBRACK %prec NOLBRACK         { Matrix1DAccess($1, $3)}
-  | PERCENT ID                                    { Matrix1DReference($2)}
+  | ID LBRACK expr  RBRACK %prec NOLBRACK         { ArrayAccess($1, $3)}
+  | PERCENT ID                                    { ArrayReference($2)}
   | OCTOTHORP ID                                  { Dereference($2)}
   | PLUS PLUS ID                                  { PointerIncrement($3) }
 
@@ -151,9 +147,9 @@ primitives:
     LITERAL                                    { Literal($1)   }
   | FLOATLITERAL                               { FloatLiteral($1) }
 
-matrix_literal:
+array_literal:
     primitives                      { [$1] }
-  | matrix_literal COMMA primitives { $3 :: $1 }
+  | array_literal COMMA primitives { $3 :: $1 }
 
 
 actuals_opt:

@@ -1,10 +1,10 @@
-exception UnsupportedMatrixType
+exception UnsupportedArrayType
 
 exception IllegalAssignment
 
 exception IllegalPointerType
 
-exception MatrixOutOfBounds
+exception ArrayOutOfBounds
 
 exception IllegalUnop
 

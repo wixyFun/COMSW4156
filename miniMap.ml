@@ -1,4 +1,4 @@
-(* Top-level of the MicroC compiler: scan & parse the input,
+(* Top-level of the miniMap compiler: scan & parse the input,
    check the resulting AST, generate LLVM IR, and dump the module *)
 
 module StringMap = Map.Make(String)
