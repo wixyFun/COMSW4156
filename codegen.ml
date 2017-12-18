@@ -42,6 +42,7 @@ let translate (globals, functions) =
                                           A.Int -> array_t i32_t size
                                         | A.Float -> array_t float_t size
                                         | A.Bool -> array_t i1_t size
+                                        | A.File -> array_t void_ptr size
                                         | _ -> raise ( UnsupportedArrayType )
     )
     | A.ArrayPointer(t) -> (match t with
@@ -196,25 +197,25 @@ let translate (globals, functions) =
       | A.ArrayReference (s) -> build_array_argument s builder
       | A.Len s -> (match (type_of_identifier s) with A.ArrayType(_, l) -> L.const_int i32_t l (* NEED TO CHANGE THIS!!!!!*)
                                                     | _ -> L.const_int i32_t 0 )
-                                                    | A.Binop (e1, op, e2) ->
-                                                        let e1' = expr builder e1
-                                                        and e2' = expr builder e2 in
-                                                          let float_bop operator =
-                                                            (match operator with
-                                                              A.Add     -> L.build_fadd
-                                                            | A.Sub     -> L.build_fsub
-                                                            | A.Mult    -> L.build_fmul
-                                                            | A.Div     -> L.build_fdiv
-                                                            | A.And     -> L.build_and
-                                                            | A.Or      -> L.build_or
-                                                            | A.Equal   -> L.build_fcmp L.Fcmp.Oeq
-                                                            | A.Neq     -> L.build_fcmp L.Fcmp.One
-                                                            | A.Less    -> L.build_fcmp L.Fcmp.Olt
-                                                            | A.Leq     -> L.build_fcmp L.Fcmp.Ole
-                                                            | A.Greater -> L.build_fcmp L.Fcmp.Ogt
-                                                            | A.Geq     -> L.build_fcmp L.Fcmp.Oge
-                                                            ) e1' e2' "tmp" builder
-                                                          in
+      | A.Binop (e1, op, e2) ->
+                              let e1' = expr builder e1
+                              and e2' = expr builder e2 in
+                              let float_bop operator =
+                                        (match operator with
+                                               A.Add     -> L.build_fadd
+                                               | A.Sub     -> L.build_fsub
+                                               | A.Mult    -> L.build_fmul
+                                               | A.Div     -> L.build_fdiv
+                                               | A.And     -> L.build_and
+                                               | A.Or      -> L.build_or
+                                               | A.Equal   -> L.build_fcmp L.Fcmp.Oeq
+                                               | A.Neq     -> L.build_fcmp L.Fcmp.One
+                                               | A.Less    -> L.build_fcmp L.Fcmp.Olt
+                                               | A.Leq     -> L.build_fcmp L.Fcmp.Ole
+                                               | A.Greater -> L.build_fcmp L.Fcmp.Ogt
+                                               | A.Geq     -> L.build_fcmp L.Fcmp.Oge
+                              ) e1' e2' "tmp" builder
+                                  in
 
                                                           let int_bop operator =
                                                             (match operator with

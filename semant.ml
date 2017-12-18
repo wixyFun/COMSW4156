@@ -219,6 +219,7 @@ let check (globals, functions) =
                                                                                   ArrayType(t, _) -> (match t with
                                                                                                             Int -> Int
                                                                                                           | Float -> Float
+                                                                                                          | File -> File 
                                                                                                           | _ -> raise ( Failure ("illegal array") )
                                                                                                         )
                                                                                 | _ -> raise ( Failure ("cannot access a primitive") )
