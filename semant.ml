@@ -106,10 +106,16 @@ let check (globals, functions) =
    { typ = String; fname = "strstr"; formals = [(String, "x"); (String, "y")];
    locals = []; body = [] } built_in_decls in
 
- (*miniMap will be checked only for the first parameter*)
+ (*miniMap will be checked -> implement *)
    let built_in_decls = StringMap.add "miniMap"
    { typ = Void; fname = "miniMap"; formals = [(File, "x")];
    locals = []; body = [] } built_in_decls in
+
+  (*will not be checked still*)
+   let built_in_decls = StringMap.add "miniMapNonThreaded"
+   { typ = Void; fname = "miniMapNonThreaded"; formals = [(File, "x");(File, "y");(Int, "z")];
+   locals = []; body = [] } built_in_decls in
+
 
   let function_decls = List.fold_left (fun m fd -> StringMap.add fd.fname fd m)
                          built_in_decls functions
@@ -219,7 +225,7 @@ let check (globals, functions) =
                                                                                   ArrayType(t, _) -> (match t with
                                                                                                             Int -> Int
                                                                                                           | Float -> Float
-                                                                                                          | File -> File 
+                                                                                                          | File -> File
                                                                                                           | _ -> raise ( Failure ("illegal array") )
                                                                                                         )
                                                                                 | _ -> raise ( Failure ("cannot access a primitive") )
@@ -231,16 +237,17 @@ let check (globals, functions) =
                                                string_of_expr ex))
     | Call(fname, actuals) as call -> let fd = function_decl fname in
     if fname <> "miniMap" then
-      if List.length actuals != List.length fd.formals then
-         raise (Failure ("expecting " ^ string_of_int
-           (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
-       else
-         List.iter2 (fun (ft, _) e -> let et = expr e in
-            ignore (check_assign ft et
-              (Failure ("illegal actual argument found " ^ string_of_typ et ^
-              " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
-           fd.formals actuals;
-         fd.typ
+      if fname <> "miniMapNonThreaded" then
+        if List.length actuals != List.length fd.formals then
+           raise (Failure ("expecting " ^ string_of_int
+             (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
+         else
+           List.iter2 (fun (ft, _) e -> let et = expr e in
+              ignore (check_assign ft et
+                (Failure ("illegal actual argument found " ^ string_of_typ et ^
+                " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
+             fd.formals actuals;
+           fd.typ
   in
 
   let check_bool_expr e = if expr e != Bool

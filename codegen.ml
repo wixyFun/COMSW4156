@@ -92,6 +92,9 @@ let translate (globals, functions) =
   let miniMap_t = L.function_type i32_t [| void_ptr; L.pointer_type (L.function_type (i32_t) [| L.i32_type  context; L.i32_type  context |] )|] in
   let miniMap_func = L.declare_function "miniMap" miniMap_t the_module in
 
+  let miniMapNonThreaded_t = L.var_arg_function_type i32_t  [| void_ptr; void_ptr; L.i32_type  context; L.pointer_type (L.function_type (i32_t) [| void_ptr|] );L.pointer_type (L.function_type (i32_t) [| void_ptr|] )|] in
+  let miniMapNonThreaded_func = L.declare_function "miniMapNonThreaded" miniMapNonThreaded_t the_module in
+
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
     let function_decl m fdecl =
@@ -372,6 +375,15 @@ let translate (globals, functions) =
 
             L.build_call miniMap_func [|fileptr; fdef |] "miniMap" builder
 
+      |A.Call ("miniMapNonThreaded", [e1; e2; e3; A.Id(e4);A.Id(e5)]) ->
+                  let fileptr1 = expr builder e1 in
+                  let fileptr2 = expr builder e2 in
+                  let numFiles = expr builder e3 in
+
+                  let (fdef1,_) = StringMap.find e4 function_decls in
+                  let (fdef2,_) = StringMap.find e5 function_decls in
+
+                  L.build_call miniMapNonThreaded_func [|fileptr1; fileptr2; numFiles; fdef1 ;fdef2 |] "miniMapNonThreaded" builder
       | A.Call (f, act) ->
          let (fdef, fdecl) = StringMap.find f function_decls in
 	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
