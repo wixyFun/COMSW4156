@@ -1,13 +1,13 @@
-#include <stdio.h>
+/*#include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <time.h>
 #include<string.h>
 #include <time.h>
 
-/*
-  @Ryan DeCosmo
-*/
+
+//  @Ryan DeCosmo
+
 //TO RUN THIS:
 //gcc -Wall -g  -pthread miniMap.c -o miniMap
 
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
 }
 
-/*
+
 size_t file_size(FILE* inputFile)
 {
   size_t count = -1;  // number of characters seen
@@ -106,7 +106,7 @@ size_t file_size(FILE* inputFile)
 
 
 
-/*#include <stdio.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -119,4 +119,4 @@ void miniMap(FILE * inputFile, int (*func_ptr)(int,int))
 
    func_ptr(2,3);
 
-}/*
+}
