@@ -45,13 +45,24 @@ bool isFileEnd (void * fp_void)
 }
 
 //free memory from file pointer and the buffer used
- void close(void * fp_void, void * buffer)
+ void closeFileBuffer(void * fp_void, void * buffer)
  {
    FILE * fp = (FILE *) fp_void;
    free(buffer);
    fclose(fp);
  }
- 
+
+ void freeBuffer(void* buffer)
+ {
+    free(buffer);
+ }
+
+ void close(void * fp_void)
+ {
+   FILE * fp = (FILE *) fp_void;
+   fclose(fp);
+ }
+
 
 #ifdef BUILD_TEST
 int main(void)
