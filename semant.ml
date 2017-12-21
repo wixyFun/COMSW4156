@@ -105,9 +105,13 @@ let check (globals, functions) =
    { typ = String; fname = "strstr"; formals = [(String, "x"); (String, "y")];
    locals = []; body = [] } built_in_decls in
 
-  let built_in_decls = StringMap.add "strchr"
-  { typ = String; fname = "strchr"; formals = [(String, "x"); (Int, "y")];
-  locals = []; body = [] } built_in_decls in
+   let built_in_decls = StringMap.add "strcpy"
+   { typ = String; fname = "strcpy"; formals = [(String, "x"); (String, "y")];
+   locals = []; body = [] } built_in_decls in
+
+   let built_in_decls = StringMap.add "strcat"
+   { typ = String; fname = "strcat"; formals = [(String, "x"); (String, "y")];
+   locals = []; body = [] } built_in_decls in
 
  (*miniMap will be checked only for the first parameter*)
    let built_in_decls = StringMap.add "miniMap"
