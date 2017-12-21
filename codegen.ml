@@ -89,12 +89,13 @@ let translate (globals, functions) =
   let strstr_t = L.function_type str_t [| str_t; str_t |] in
   let strstr_func = L.declare_function "strstr" strstr_t the_module in
 
+  (*the part of the miniMap interface that is still in the works, has only header tested*)
   let miniMap_t = L.function_type i32_t [| void_ptr; L.pointer_type (L.function_type (i32_t) [| L.i32_type  context; L.i32_type  context |] )|] in
   let miniMap_func = L.declare_function "miniMap" miniMap_t the_module in
-
+(*
   let miniMapNonThreaded_t = L.var_arg_function_type i32_t  [| void_ptr; void_ptr; L.i32_type  context; L.pointer_type (L.function_type (i32_t) [| void_ptr|] );L.pointer_type (L.function_type (i32_t) [| void_ptr|] )|] in
   let miniMapNonThreaded_func = L.declare_function "miniMapNonThreaded" miniMapNonThreaded_t the_module in
-
+*)
   (* Define each function (arguments and return type) so we can call it *)
   let function_decls =
     let function_decl m fdecl =
@@ -198,7 +199,7 @@ let translate (globals, functions) =
       | A.Id s -> L.build_load (lookup s) s builder
       | A.ArrayLiteral s -> L.const_array (find_array_type s) (Array.of_list (List.map (expr builder) s))
       | A.ArrayReference (s) -> build_array_argument s builder
-      | A.Len s -> (match (type_of_identifier s) with A.ArrayType(_, l) -> L.const_int i32_t l (* NEED TO CHANGE THIS!!!!!*)
+      | A.Len s -> (match (type_of_identifier s) with A.ArrayType(_, l) -> L.const_int i32_t l
                                                     | _ -> L.const_int i32_t 0 )
       | A.Binop (e1, op, e2) ->
                               let e1' = expr builder e1
@@ -345,52 +346,51 @@ let translate (globals, functions) =
                                                                             | _ -> build_array_access s (L.const_int i32_t 0) i1 builder false )
       | A.PointerIncrement (s) ->  build_pointer_increment s builder false
       | A.Dereference (s) -> build_pointer_dereference s builder false
-      | A.Call ("print", [e]) | A.Call ("printb", [e]) ->
-	  L.build_call printf_func [| int_format_str ; (expr builder e) |]
-	    "printf" builder
-      | A.Call ("printbig", [e]) ->
-        L.build_call printbig_func [| (expr builder e) |] "printbig" builder
-      | A.Call ("split_by_size", [e;f]) ->
-        L.build_call split_by_size_func [| (expr builder e); (expr builder f)|] "split_by_size" builder
-      | A.Call ("split_by_quant", [e;f]) ->
-        L.build_call split_by_quant_func [| (expr builder e); (expr builder f)|] "split_by_quant" builder
-      |  A.Call ("printstring", [e]) ->
-        L.build_call printf_func [| str_format_str; (expr builder e) |]
-        "printf" builder
-      | A.Call ("open", [e1;e2]) ->
-        L.build_call open_func [| (expr builder e1);(expr builder e2)|] "open" builder
-      | A.Call ("readFile", [e1;e2]) ->
-          L.build_call readFile_func [| (expr builder e1); (expr builder e2)|] "readFile" builder
-      | A.Call ("isFileEnd", [e1]) ->
-          L.build_call isFileEnd_func [| (expr builder e1)|] "isFileEnd" builder
       | A.Call ("close", [e1;e2]) ->
           L.build_call close_func [| (expr builder e1); (expr builder e2)|] "close" builder
+      | A.Call ("isFileEnd", [e1]) ->
+          L.build_call isFileEnd_func [| (expr builder e1)|] "isFileEnd" builder
+      | A.Call ("open", [e1;e2]) ->
+          L.build_call open_func [| (expr builder e1);(expr builder e2)|] "open" builder
+      | A.Call ("print", [e]) | A.Call ("printb", [e]) ->
+	        L.build_call printf_func [| int_format_str ; (expr builder e) |]
+	        "printf" builder
+      | A.Call ("printbig", [e]) ->
+          L.build_call printbig_func [| (expr builder e) |] "printbig" builder
+      |  A.Call ("printstring", [e]) ->
+          L.build_call printf_func [| str_format_str; (expr builder e) |]
+          "printf" builder
+      | A.Call ("readFile", [e1;e2]) ->
+          L.build_call readFile_func [| (expr builder e1); (expr builder e2)|] "readFile" builder
+      | A.Call ("split_by_size", [e;f]) ->
+          L.build_call split_by_size_func [| (expr builder e); (expr builder f)|] "split_by_size" builder
+      | A.Call ("split_by_quant", [e;f]) ->
+          L.build_call split_by_quant_func [| (expr builder e); (expr builder f)|] "split_by_quant" builder
       | A.Call ("strstr", [e1;e2]) ->
         L.build_call strstr_func [| (expr builder e1); (expr builder e2)|]
           "strstr" builder
+      (* the miniMap interface*)
       |A.Call ("miniMap", [e1; A.Id(e2)]) ->
             let fileptr = expr builder e1 in
-
             let (fdef,_) = StringMap.find e2 function_decls in
-
             L.build_call miniMap_func [|fileptr; fdef |] "miniMap" builder
-
-      |A.Call ("miniMapNonThreaded", [e1; e2; e3; A.Id(e4);A.Id(e5)]) ->
-                  let fileptr1 = expr builder e1 in
-                  let fileptr2 = expr builder e2 in
-                  let numFiles = expr builder e3 in
-
-                  let (fdef1,_) = StringMap.find e4 function_decls in
-                  let (fdef2,_) = StringMap.find e5 function_decls in
-
-                  L.build_call miniMapNonThreaded_func [|fileptr1; fileptr2; numFiles; fdef1 ;fdef2 |] "miniMapNonThreaded" builder
       | A.Call (f, act) ->
-         let (fdef, fdecl) = StringMap.find f function_decls in
-	 let actuals = List.rev (List.map (expr builder) (List.rev act)) in
-	 let result = (match fdecl.A.typ with A.Void -> ""
-                                            | _ -> f ^ "_result") in
-         L.build_call fdef (Array.of_list actuals) result builder
-    in
+            let (fdef, fdecl) = StringMap.find f function_decls in
+      	    let actuals = List.rev (List.map (expr builder) (List.rev act)) in
+      	    let result = (match fdecl.A.typ with A.Void -> ""
+                                                  | _ -> f ^ "_result") in
+            L.build_call fdef (Array.of_list actuals) result builder
+          in
+      (*the not tested part of the miniMap interface
+      |A.Call ("miniMapNonThreaded", [e1; e2; e3; A.Id(e4);A.Id(e5)]) ->
+            let fileptr1 = expr builder e1 in
+            let fileptr2 = expr builder e2 in
+            let numFiles = expr builder e3 in
+            let (fdef1,_) = StringMap.find e4 function_decls in
+            let (fdef2,_) = StringMap.find e5 function_decls in
+            L.build_call miniMapNonThreaded_func [|fileptr1; fileptr2; numFiles; fdef1 ;fdef2 |] "miniMapNonThreaded" builder
+      *)
+
 
     (* Invoke "f builder" if the current block doesn't already
        have a terminal (e.g., a branch). *)

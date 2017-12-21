@@ -67,18 +67,17 @@ bool isFileEnd (void * fp_void)
 #ifdef BUILD_TEST
 int main(void)
 {
-void * temp = open("text.txt", "r");
- FILE * fp = (FILE *) temp;
+  void * temp = open("text.txt", "r");
+  FILE * fp = (FILE *) temp;
 
- char * buf;
+  char * buf;
 
- while(! isFileEnd(fp))
- {
-   buf = readFile(fp, 200);
-   printf("%s\n", buf );
- }
+  while(! isFileEnd(fp))
+  {
+    buf = readFile(fp, 200);
+    printf("%s\n", buf );
+  }
 
-
- close(fp,buf);
+  close(fp,buf);
 }
 #endif

@@ -55,17 +55,6 @@ let check (globals, functions) =
 
   let built_in_decls = StringMap.empty in
 
-  (* let built_in_decls =  StringMap.add "print"
-     { typ = Void; fname = "print"; formals = [(Int, "x")];
-       locals = []; body = [] } (StringMap.add "printb"
-     { typ = Void; fname = "printb"; formals = [(Bool, "x")];
-       locals = []; body = [] } (StringMap.add "printbig"
-     { typ = Void; fname = "printbig"; formals = [(Int, "x")];
-       locals = []; body = []} (StringMap.add "printstring"
-     { typ = Void; fname = "printstring"; formals = [(String,"x")];
-       locals = []; body = []})))
-  in *)
-
   let built_in_decls = StringMap.add "print"
 	{ typ = Void; fname = "print"; formals = [(Int, "x")];
    locals = []; body = [] } built_in_decls in
@@ -225,33 +214,33 @@ let check (globals, functions) =
 	  		   string_of_typ t ^ " in " ^ string_of_expr ex)))
       | Noexpr -> Void
       | Assign(e1, e2) as ex -> let lt = ( match e1 with
-                                                        | ArrayAccess(s, _) -> (match (type_of_identifier s) with
-                                                                                  ArrayType(t, _) -> (match t with
+                                          | ArrayAccess(s, _) -> (match (type_of_identifier s) with
+                                                                  ArrayType(t, _) -> (match t with
                                                                                                             Int -> Int
                                                                                                           | Float -> Float
                                                                                                           | File -> File
                                                                                                           | _ -> raise ( Failure ("illegal array") )
                                                                                                         )
-                                                                                | _ -> raise ( Failure ("cannot access a primitive") )
+                                                                  | _ -> raise ( Failure ("cannot access a primitive") )
                                                                               )
-                                                        | _ -> expr e1)
+                                          | _ -> expr e1)
                   and rt = expr e2 in
                   check_assign lt rt (Failure ("illegal assignment " ^ string_of_typ lt ^
                                                " = " ^ string_of_typ rt ^ " in " ^
                                                string_of_expr ex))
+
     | Call(fname, actuals) as call -> let fd = function_decl fname in
-    if fname <> "miniMap" then
-      if fname <> "miniMapNonThreaded" then
-        if List.length actuals != List.length fd.formals then
-           raise (Failure ("expecting " ^ string_of_int
-             (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
-         else
-           List.iter2 (fun (ft, _) e -> let et = expr e in
-              ignore (check_assign ft et
-                (Failure ("illegal actual argument found " ^ string_of_typ et ^
-                " expected " ^ string_of_typ ft ^ " in " ^ string_of_expr e))))
-             fd.formals actuals;
-           fd.typ
+        if fname <> "miniMap" then
+          if List.length actuals != List.length fd.formals then
+             raise (Failure ("expecting " ^ string_of_int
+               (List.length fd.formals) ^ " arguments in " ^ string_of_expr call))
+        else
+          List.iter2 (fun (ft, _) e -> let et = expr e in
+                ignore (check_assign ft et
+                  (Failure ("illegal actual argument found " ^ string_of_typ ft ^
+                  " expected " ^ string_of_typ et ^ " in " ^ string_of_expr e))))
+               fd.formals actuals;
+             fd.typ
   in
 
   let check_bool_expr e = if expr e != Bool
