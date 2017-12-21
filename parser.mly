@@ -1,4 +1,10 @@
 /* Ocamlyacc parser for miniMap */
+/*
+@Charis Lam
+@Jamie Song
+@Ryan DeCosmo
+@Olessya Medvedeva
+*/
 
 %{
 open Ast

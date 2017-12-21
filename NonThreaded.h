@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 void miniMapNonThreaded(FILE* context, FILE* splits, int numberOfFiles, void (*mapper)(), void (*reducer)());
-void mapNonThreaded( FILE* file );
-void reduceNonThreaded(FILE* file);
+void map( FILE* file,FILE* context  );
+void reduce(FILE* context, char** array);
 
 #endif //UNTITLED_NONTHREADED_H

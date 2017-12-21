@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# Edited by: Jamie, Charis, Olessya, and Ryan
+
 # Regression testing script for miniMap
 # Step through a list of files
 #  Compile, run, and check the output of each expected-to-work test

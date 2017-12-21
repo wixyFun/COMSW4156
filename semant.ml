@@ -1,4 +1,8 @@
 (* Semantic checking for the miniMap compiler *)
+(*
+  @Olessya Medvedeva
+  @Jamie Song
+*)
 
 open Ast
 

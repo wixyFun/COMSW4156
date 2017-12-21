@@ -1,4 +1,9 @@
 (* Ocamllex scanner for miniMap *)
+(* @Charis Lam
+  @Olessya Medvedeva
+  @Jamie Song
+  @Ryan DeCosmo
+*)
 
 { open Parser }
 

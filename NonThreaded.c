@@ -1,38 +1,20 @@
-//
-// Created by Ryan DeCosmo on 12/19/17.
-//
+
+/*
+@Ryan DeCosmo
+@Olessya Medvedeva
+*/
 
 #include "NonThreaded.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#define BUF 128 /* can change the buffer size as well */
-#define TOT 10 /* change to accomodate other sizes, change ONCE here */
 
 
+//compare for string functions
 static int compare (const void * a, const void * b)
 {
-    /* The pointers point to offsets into "array", so we need to
-       dereference them to get at the strings. */
-
     return strcmp (*(const char **) a, *(const char **) b);
 }
 
 
-
-void mapNonThreaded( FILE* file ){
-
-    char* word = "Inside Mapper";
-    printf("%s\n", word);
-}
-
-void reduceNonThreaded(FILE* file){
-    char* word = "Inside Reducer";
-    printf("%s\n", word);
-
-}
-
-void map(FILE* splits, FILE* context){
+void tokenizeFile(FILE* splits, FILE* context){
     char delimit[]=" \t\r\n\v\f-,:;."; //const char s = ' ';
     char *token;
 
@@ -40,7 +22,7 @@ void map(FILE* splits, FILE* context){
         char line [1000];
         while(fgets(line,sizeof line,splits)!= NULL)  {
             //  fprintf(stdout,"%s",line);
-          //  char* one = "1";
+            //  char* one = "1";
             token = strtok(line, delimit);
             while( token  ) {
                 fprintf(context,"%s \n", token ); //, one); //
@@ -49,26 +31,21 @@ void map(FILE* splits, FILE* context){
         }
     }
     else {
-        perror(splits);
+        perror("Error in mapper file");
     }
     rewind(context);
+
 }
 
-
-
-void reduce(FILE* context, char** array){
-
-
+void countUniqueTokens(FILE* context, char** array){
     rewind(context);
-
     int totalstrings = 300;
     int stringsize = 50;
+    char** words ;
+    int freq[300];
 
-
-    //int i;
     for (int i = 0; i < totalstrings; i++) {
         array[i] = (char *)malloc(stringsize);
-       // printf("array %i \n", sizeof(array[i]));
     }
 
     char delimit[]=",1"; //const char s = ' ';
@@ -78,82 +55,65 @@ void reduce(FILE* context, char** array){
         char line [1000];
         int j = 0;
         while(fgets(line,sizeof line,context)!= NULL)  {
-            //  fprintf(stdout,"%s",line);
-
-            //char* one = "1";
             token = strtok(line, delimit);
-
-           // while( token  ) {
-            //for(int j = 0; j<100; j++){
-               //printf("%s",token);
-                //array[j] = (char *)malloc(sizeof(token));
-                //array[j] = token;
-                //strcpy(*array[j],token);
-                printf("%s \n",token);
-                strcpy(array[j],token);
-                /*for(int s = 0; s < sizeof(token) ; s++){
-                    array[j][s] = token+s;
-                }*/
-
-                //fprintf(context,"%s,%s\n", token, one);
-               token = strtok(NULL, delimit);
+            strcpy(array[j],token);
+            token = strtok(NULL, delimit);
             j++;
         }
     }
     else {
-        perror(context);
+        perror("Error");
     }
+    //sort the array
+    qsort (array, totalstrings, sizeof (const char *), compare);
 
-        qsort (array, 300, sizeof (const char *), compare);
-
-        for (int i = 0; i < 300; i++) {
-            printf ("%d: %s.\n", i, array[i]);
-        }
-
-    char** words;
-    int freq[300];
+    words = malloc(sizeof(char*)*totalstrings);
 
     for (int i = 0; i < totalstrings; i++) {
-        words = (char *)malloc(stringsize);
-    }
-
-    for (int i = 0; i < totalstrings; i++) {
-        //freq[i] = (int)malloc(sizeof(int));
+        words[i] = (char *)malloc(stringsize);
         freq[i] = 0;
     }
 
-    int count = 1;
-    char* tempWord = array[0];
-    int j = 0;
-      for (int i = 0; i < 300; i++) {
-          if (strcmp(tempWord, array[i]) == 0) {
-              count++;
-              freq[j] = count;
-          } else {
-              words[j] = tempWord;
-              freq[j]= count;
-              tempWord = array[i];
-              j = j+1;
-              count = 0;
-          }
+    //accumulator
+    char** ptr = array;
+    int counts =0;
+    int i = 0;
+    words[0] = *ptr;
 
-
-  }
-
-    for (int i = 0; i < 300; i++) {
-       printf("Freq I :%i \n", freq[i]);
-    }
-    for (int i = 0; i < 300; i++) {
-        printf("words I :%s \n", words[i]);
+    while(*ptr != 0) {
+        // printf("%s \n", *ptr);
+        if (strcmp(words[i], *ptr) == 0) {
+            words[i] = *ptr;
+            ++ptr;
+            freq[i] = freq[i] + 1;
+        } else {
+            i++;
+            words[i] = *ptr;
+            freq[i] = freq[i] + 1;
+            ++ptr;
+        }
     }
 
-
-
+    for (int i = 0; i < sizeof(freq) / sizeof(freq[0]); i++) {
+        printf("Word: %s , Freq  :%i \n", words[i], freq[i]);
     }
+}
 
 
 
 
+
+void map(FILE* splits, FILE* context){
+    //built in function to tokenize mini files
+    tokenizeFile(splits,context);
+}
+
+
+
+void reduce(FILE* context, char** array){
+    //function to accumulate values of the context file
+    countUniqueTokens(context,array);
+}
 
 
 
@@ -161,19 +121,12 @@ void reduce(FILE* context, char** array){
 void miniMapNonThreaded(FILE* context, FILE* splits, int numberOfFiles, void (*mapper)(), void (*reducer)()){
 
 
-    int numFiles =  numberOfFiles;
-    printf("numFiles: %i\n", numFiles );
-
     char **array = malloc(300 * sizeof(char *));
 
     map(splits,context);
     reduce(context,array);
 
-
     fclose(splits);
     fclose(context);
 
 }
-
-
-

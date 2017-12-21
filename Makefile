@@ -2,6 +2,13 @@
 #
 # eval `opam config env`
 
+
+#@Charis Lam
+#@Jamie Song
+#@Ryan DeCosmo
+#@Olessya Medvedeva
+
+
 # Easiest way to build: using ocamlbuild, which in turn uses ocamlfind
 
 .PHONY : all
